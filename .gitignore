@@ -1,0 +1,6 @@
+venv
+.idea
+examples/data/
+__pycache__
+*.pyc
+*.json
