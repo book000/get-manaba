@@ -19,7 +19,7 @@ Library for get various information about [manaba](https://manaba.jp).
 ## Installation
 
 1. Clone from GitHub repository: `git clone https://github.com/book000/get-manaba.git`
-2. Install the dependency package from `requirements.txt`: `pip3 install -r -U requirements.txt`
+2. Install the dependency package from `requirements.txt`: `pip3 install -U -r requirements.txt`
 
 ## Docs
 
