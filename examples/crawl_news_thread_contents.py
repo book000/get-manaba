@@ -116,6 +116,9 @@ if __name__ == "__main__":
                 if not os.path.exists(os.path.join("data", course_id, "contents", content_id, text_id)):
                     os.mkdir(os.path.join("data", course_id, "contents", content_id, text_id))
 
+                if os.path.exists(os.path.join("data", course_id, "contents", content_id, text_id, text_version + ".json")):
+                    continue
+
                 with open(os.path.join("data", course_id, "contents", content_id, text_id, text_version + ".json"), "w") as f:
                     f.write(json.dumps(text_detail))
 

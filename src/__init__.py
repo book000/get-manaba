@@ -84,7 +84,7 @@ class manaba:
                 "teacher": course_teacher
             })
 
-        self.session.get(urljoin(self.base_url, "/ct/", before_course_view))
+        self.session.get(urljoin(self.base_url, "/ct/" + before_course_view))
         return courses
 
     def getCourseQuerys(self, course_id) -> list:
