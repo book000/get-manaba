@@ -322,12 +322,14 @@ class manaba:
         news_date = soup.find("span", {"class": "msg-date"}).text.strip()
         news_author = soup.find("div", {"class": "msg-info"}).text.replace("投稿者", "").strip()
         news_text = soup.find("div", {"class": "msg-text"}).text.strip()
+        news_html = str(soup.find("div", {"class": "msg-text"}))
 
         return {
             "title": news_title,
             "date": news_date,
             "author": news_author,
-            "text": news_text
+            "text": news_text,
+            "html": news_html
         }
 
     def getCourseThreads(self, course_id) -> list:
@@ -392,6 +394,7 @@ class manaba:
 
         thread_title = thread_tags[0].find("div", {"class": "articlesubject"}).text.strip()
         thread_text = thread_tags[0].find("div", {"class": "articlebody-msgbody"}).text.strip()
+        thread_html = str(thread_tags[0].find("div", {"class": "articlebody-msgbody"}))
         thread_author = str(thread_tags[0].find("span", {"class": "posted-time"}).previous_sibling.string).strip()
         thread_date = thread_tags[0].find("span", {"class": "posted-time"}).text.strip()
 
@@ -423,6 +426,7 @@ class manaba:
             "date": thread_date,
             "author": thread_author,
             "text": thread_text,
+            "html": thread_html,
             "comments": comments
         }
 
@@ -525,6 +529,7 @@ class manaba:
 
         text_title = soup.find("div", {"class": "articlebody"}).find("h1", {"class": "pagetitle"}).text.strip()
         text_text = soup.find("div", {"class": "articlebody"}).find("div", {"class": "articletext"}).text.strip()
+        text_html = str(soup.find("div", {"class": "articlebody"}).find("div", {"class": "articletext"}))
         author_tags = soup.findAll("div", {"class": "articleauthor"})
         for author_tag in author_tags:
             if "- " not in author_tag.text:
@@ -548,6 +553,7 @@ class manaba:
         return {
             "title": text_title,
             "text": text_text,
+            "html": text_html,
             "date": text_date,
             "author": text_author,
             "version": text_version,
