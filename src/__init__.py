@@ -410,8 +410,13 @@ class manaba:
             comment_author = None
             comment_date = None
             if comment_tag.find("span", {"class": "posted-time"}) is not None:
-                comment_author = str(comment_tag.find("span", {"class": "posted-time"}).previous_sibling.string).strip()
+                if comment_tag.find("div", {"class": "articleinfo"}).find("a", {"href": "#"}) is not None:
+                    comment_author = comment_tag.find("div", {"class": "articleinfo"}).find("a").text.strip()
+                else:
+                    comment_author = str(comment_tag.find("span", {"class": "posted-time"}).previous_sibling.string).strip()
+
                 comment_date = comment_tag.find("span", {"class": "posted-time"}).text.strip()
+
 
             comments.append({
                 "num": comment_num,
@@ -559,4 +564,3 @@ class manaba:
             "version": text_version,
             "files": files
         }
-
