@@ -28,4 +28,5 @@ jobs:
 
     - name: Check with flake8
       run: |
+        mypy --install-types
         mypy src
