@@ -13,7 +13,7 @@ Library for get various information about [manaba](https://manaba.jp).
 ## Requirements
 
 - manaba (Tested with `manaba 2.96`)
-- Python 3.9+
+- Python 3.6+
 - [requirements.txt](requirements.txt): `requests`, `beautifulsoup4`
 
 ## Installation
