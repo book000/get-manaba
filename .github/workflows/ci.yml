@@ -28,5 +28,5 @@ jobs:
 
     - name: Check with flake8
       run: |
-        mypy --install-types
+        yes | mypy src --install-types || true
         mypy src
