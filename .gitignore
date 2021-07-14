@@ -1,6 +1,4 @@
 venv
 .idea
-examples/data/
-__pycache__
+config.json
 *.pyc
-*.json
