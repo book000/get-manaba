@@ -5,7 +5,7 @@ Library for get various information about manaba.
 manabaのさまざまな情報を取得するためのライブラリです。
 """
 
-from typing import Union
+from typing import Optional, Union
 from urllib.parse import urljoin, parse_qs, urlparse
 
 import bs4.element
@@ -74,9 +74,11 @@ class ManabaCourse:
     """
     manaba コース情報
     """
-    def __init__(self, name: str, course_id: int, lecture_at: Union[str, None], teacher: Union[str, None], status_lamps: ManabaCourseLamps):
+    def __init__(self, name: str, course_id: int, year: Optional[int], lecture_at: Optional[str],
+                 teacher: Optional[str], status_lamps: ManabaCourseLamps):
         self._name = name
         self._course_id = course_id
+        self._year = year
         self._lecture_at = lecture_at
         self._teacher = teacher
         self._status_lamps = status_lamps
@@ -101,7 +103,22 @@ class ManabaCourse:
         return self._course_id
 
     @property
-    def lecture_at(self) -> Union[str, None]:
+    def year(self) -> Optional[int]:
+        """
+        コースの年度
+
+        Returns
+        -------
+
+        Notes
+        -------
+        コース一覧にて曜日表示を利用している場合、この項目は None になる可能性があります。
+
+        """
+        return self._year
+
+    @property
+    def lecture_at(self) -> Optional[str]:
         """
         コース年度・時限
 
@@ -110,7 +127,7 @@ class ManabaCourse:
         return self._lecture_at
 
     @property
-    def teacher(self) -> Union[str, None]:
+    def teacher(self) -> Optional[str]:
         """
         コースの担当教員名
 
@@ -149,25 +166,36 @@ class Manaba:
         response = self.session.get(urljoin(self.__base_url, "/ct/login"))
         if response.status_code != 200:
             return False
-        soup = BeautifulSoup(response.text, "html.parser")
+        soup = BeautifulSoup(response.text, "html5lib")
 
         login_form_box = soup.find("div", {"id": "login-form-box"})
-        sessionValue1 = login_form_box.find("input", {"name": "SessionValue1"}).get("value")
-        sessionValue = login_form_box.find("input", {"name": "SessionValue"}).get("value")
-        loginValue = login_form_box.find("input", {"name": "login"}).get("value")
+        session_value1 = login_form_box.find("input", {"name": "SessionValue1"}).get("value")
+        session_value = login_form_box.find("input", {"name": "SessionValue"}).get("value")
+        login_value = login_form_box.find("input", {"name": "login"}).get("value")
 
         response = self.session.post(urljoin(self.__base_url, "/ct/login"), params={
             "userid": username,
             "password": password,
-            "login": loginValue,
+            "login": login_value,
             "manaba-form": "1",
-            "sessionValue1": sessionValue1,
-            "sessionValue": sessionValue
+            "sessionValue1": session_value1,
+            "sessionValue": session_value
         })
 
         self.__logged_in = response.status_code == 200
 
         return self.__logged_in
+
+    def get_course(self, course_id: int) -> ManabaCourse:
+        """
+        指定したコース ID のコース情報(ManabaCourse)を取得します。
+
+        Parameters
+        ----------
+        course_id : int
+            取得するコースのコース ID
+        """
+        pass
 
     def get_courses(self) -> list[ManabaCourse]:
         """
@@ -175,12 +203,11 @@ class Manaba:
 
         :return: 参加しているコース情報
         """
-        print(self.__logged_in)
         if not self.__logged_in:
             raise ManabaNotLoggedIn()
 
         response = self.session.get(urljoin(self.__base_url, "/ct/home_course"))
-        soup = BeautifulSoup(response.text, "html.parser")
+        soup = BeautifulSoup(response.text, "html5lib")
 
         correct_list_format_href: str = soup \
             .find("ul", {"class": "infolist-tab"}) \
@@ -189,18 +216,17 @@ class Manaba:
             .get("href")
         correct_list_format = parse_qs(urlparse(correct_list_format_href).query)["chglistformat"][0]
 
-        mycourses = soup.find("div", {"class": "mycourses-body"})
+        my_courses = soup.find("div", {"class": "mycourses-body"})
 
         if correct_list_format == "thumbnail":
-            return self._get_courses_from_thumbnail(mycourses)
+            return self._get_courses_from_thumbnail(my_courses)
         elif correct_list_format == "list":
-            return self._get_courses_from_list(mycourses)
+            return self._get_courses_from_list(my_courses)
         elif correct_list_format == "timetable":
-            return self._get_courses_from_timetable(mycourses)
+            return self._get_courses_from_timetable(my_courses, soup.find("table", {"class": "courselist"}))
 
-    @staticmethod
-    def _get_courses_from_thumbnail(mycourses: bs4.element.Tag) -> list[ManabaCourse]:
-        course_cards = mycourses.find_all("div", {"class": "coursecard"})
+    def _get_courses_from_thumbnail(self, my_courses: bs4.element.Tag) -> list[ManabaCourse]:
+        course_cards = my_courses.find_all("div", {"class": "coursecard"})
 
         courses = []
         course_card: bs4.element.Tag
@@ -209,46 +235,84 @@ class Manaba:
             course_name = title_link.text
             course_id = title_link.get("href")
 
-            courseitems: bs4.element.Tag = course_card.find("dl", {"class": "courseitems"})
-            dts = courseitems.find_all("dt", {"class": "courseitemtext"}, recursive=False)
-            dds = courseitems.find_all("dd", {"class": "courseitemdetail"}, recursive=False)
+            course_items: bs4.element.Tag = course_card.find("dl", {"class": "courseitems"})
+            dts = course_items.find_all("dt", {"class": "courseitemtext"}, recursive=False)
+            dds = course_items.find_all("dd", {"class": "courseitemdetail"}, recursive=False)
 
-            lecture_at: Union[str, None] = None
-            teacher: Union[str, None] = None
+            year: Optional[int] = None
+            lecture_at: Optional[str] = None
+            teacher: Optional[str] = None
 
             dt: bs4.element.Tag
             dd: bs4.element.Tag
             for dt, dd in zip(dts, dds):
                 dt_text = dt.text.strip()
-                dd_text = dt.text.strip()
+                dd_text = dd.text.strip()
 
                 if dt_text == "時限":
-                    lecture_at = dd_text
+                    lecture_at = dd.find("span").text
+                    year = int(dd_text.replace(dd.find("span").text, ""))
                 elif dt_text == "担当":
                     teacher = dd_text
 
-            card_statuses = course_card \
-                .find("div", {"class": "course-card-status"}) \
-                .find_all("img")
+            status_lamps = self._get_lamps_from_card(course_card.find("div", {"class": "course-card-status"}))
 
-            status_lamps = ManabaCourseLamps(
-                card_statuses[0].get("src").endswith("on.png"),
-                card_statuses[1].get("src").endswith("on.png"),
-                card_statuses[2].get("src").endswith("on.png"),
-                card_statuses[3].get("src").endswith("on.png"),
-                card_statuses[4].get("src").endswith("on.png")
-            )
-
-            courses.append(ManabaCourse(course_name, course_id, lecture_at, teacher, status_lamps))
+            courses.append(ManabaCourse(course_name, course_id, year, lecture_at, teacher, status_lamps))
 
         return courses
 
-    def _get_courses_from_list(self, mycourses: bs4.element.Tag) -> list[ManabaCourse]:
-        pass
+    def _get_courses_from_list(self, my_courses: bs4.element.Tag) -> list[ManabaCourse]:
+        course_rows = my_courses.find_all("tr", {"class": "courselist-c"})
 
-    def _get_courses_from_timetable(self, mycourses: bs4.element.Tag) -> list[ManabaCourse]:
-        pass
+        courses = []
+        course_row: bs4.element.Tag
+        for course_row in course_rows:
+            course_name = course_row.find("span", {"class": "courselist-title"}).text
+            course_id = course_row.find("span", {"class": "courselist-title"}).find("a").get("href")
+
+            status_lamps = self._get_lamps_from_card(course_row.find("div", {"class": "course-card-status"}))
+            course_tds = course_row.find_all("td")
+            course_year = int(course_tds[1].text.strip()) if len(course_tds) > 1 else None
+            course_time = course_tds[2].text.strip() if len(course_tds) > 2 else None
+            course_teacher = course_tds[3].text.strip() if len(course_tds) > 3 else None
+
+            courses.append(ManabaCourse(course_name, course_id, course_year, course_time, course_teacher, status_lamps))
+
+        return courses
+
+    def _get_courses_from_timetable(self, my_courses: bs4.element.Tag, course_list: bs4.element.Tag) -> list[ManabaCourse]:
+        course_cards = my_courses.find_all("div", {"class": "courselistweekly-c"})
+
+        courses = []
+        course_row: bs4.element.Tag
+        for course_card in course_cards:
+            course_name = course_card.find("a").text
+            course_id = course_card.find("a").get("href")
+
+            status_lamps = self._get_lamps_from_card(course_card)
+
+            courses.append(ManabaCourse(course_name, course_id, None, None, None, status_lamps))
+
+        other_courses = self._get_courses_from_list(course_list)
+        courses.extend(other_courses)
+
+        return courses
+
+    @staticmethod
+    def _get_lamps_from_card(course_status: bs4.element.Tag) -> ManabaCourseLamps:
+        course_statuses = course_status \
+            .find_all("img")
+        return ManabaCourseLamps(
+            course_statuses[0].get("src").endswith("on.png"),
+            course_statuses[1].get("src").endswith("on.png"),
+            course_statuses[2].get("src").endswith("on.png"),
+            course_statuses[3].get("src").endswith("on.png"),
+            course_statuses[4].get("src").endswith("on.png")
+        )
 
 
 class ManabaNotLoggedIn(Exception):
+    """
+    manaba にログインしている必要があるがしていない
+    """
     pass
