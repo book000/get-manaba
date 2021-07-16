@@ -5,12 +5,12 @@ Library for get various information about manaba.
 manabaのさまざまな情報を取得するためのライブラリです。
 """
 
-from typing import Optional, Union
-from urllib.parse import urljoin, parse_qs, urlparse
+from typing import Optional
+from urllib.parse import parse_qs, urljoin, urlparse
 
 import bs4.element
-from bs4 import BeautifulSoup
 import requests
+from bs4 import BeautifulSoup
 
 
 class ManabaCourseLamps:
@@ -29,7 +29,8 @@ class ManabaCourseLamps:
         """
         コースニュースランプ
 
-        :return: newsランプが点いているか
+        Returns:
+            bool: newsランプが点いているか
         """
         return self._news
 
@@ -38,7 +39,8 @@ class ManabaCourseLamps:
         """
         デッドラインランプ (課題ランプ)
 
-        :return: デッドラインランプが点いているか
+        Returns:
+            bool: デッドラインランプが点いているか
         """
         return self._deadline
 
@@ -47,7 +49,8 @@ class ManabaCourseLamps:
         """
         グラッドランプ (成績ランプ)
 
-        :return: 成績ランプが点いているか
+        Returns:
+            bool: 成績ランプが点いているか
         """
         return self._grad
 
@@ -56,7 +59,8 @@ class ManabaCourseLamps:
         """
         スレッドランプ
 
-        :return: スレッドランプが点いているか
+        Returns:
+            bool: スレッドランプが点いているか
         """
         return self._thread
 
@@ -65,7 +69,8 @@ class ManabaCourseLamps:
         """
         個人ランプ (コレクション)
 
-        :return: 個人ランプが点いているか
+        Returns:
+            bool: 個人ランプが点いているか
         """
         return self._individual
 
@@ -76,6 +81,17 @@ class ManabaCourse:
     """
     def __init__(self, name: str, course_id: int, year: Optional[int], lecture_at: Optional[str],
                  teacher: Optional[str], status_lamps: ManabaCourseLamps):
+        """
+        manaba コース情報
+
+        Args:
+            name: コース名
+            course_id: コース ID
+            year: コース年度
+            lecture_at: 時限
+            teacher: 担当教員名
+            status_lamps: ステータスランプ
+        """
         self._name = name
         self._course_id = course_id
         self._year = year
@@ -88,7 +104,8 @@ class ManabaCourse:
         """
         コース名
 
-        :return: コースの名称
+        Returns:
+            str: コースの名称
         """
         return self._name
 
@@ -98,7 +115,9 @@ class ManabaCourse:
         コース ID (URLの一部)
         ※コースコードではない
 
-        :return: コース ID
+        Returns:
+            int: コース ID
+
         """
         return self._course_id
 
@@ -107,13 +126,11 @@ class ManabaCourse:
         """
         コースの年度
 
-        Returns
-        -------
+        Returns:
+            Optional[int]: コースの年度
 
-        Notes
-        -------
-        コース一覧にて曜日表示を利用している場合、この項目は None になる可能性があります。
-
+        Notes:
+            コース一覧にて曜日表示を利用している場合、この項目は None になる可能性があります。
         """
         return self._year
 
@@ -122,7 +139,8 @@ class ManabaCourse:
         """
         コース年度・時限
 
-        :return: コースの年度および時限 (取得できない場合 None)
+        Returns:
+            Optional[str]: コースの年度および時限 (取得できない場合 None)
         """
         return self._lecture_at
 
@@ -131,7 +149,8 @@ class ManabaCourse:
         """
         コースの担当教員名
 
-        :return: コースの担当教員名 (取得できない場合 None)
+        Returns:
+            Optional[str]: コースの担当教員名 (取得できない場合 None)
         """
         return self._teacher
 
@@ -140,7 +159,8 @@ class ManabaCourse:
         """
         コースのステータスランプ
 
-        :return: コースのステータスランプ
+        Returns:
+            ManabaCourseLamps: コースのステータスランプ
         """
         return self._status_lamps
 
@@ -158,11 +178,13 @@ class Manaba:
         """
         manaba にログインする
 
-        :param username: manaba ユーザー名
-        :param password: manaba パスワード
-        :return: ログインできたか
-        """
+        Args:
+            username: manaba ユーザー名
+            password: manaba パスワード
 
+        Returns:
+            bool: ログインできたか
+        """
         response = self.session.get(urljoin(self.__base_url, "/ct/login"))
         if response.status_code != 200:
             return False
@@ -190,10 +212,11 @@ class Manaba:
         """
         指定したコース ID のコース情報(ManabaCourse)を取得します。
 
-        Parameters
-        ----------
-        course_id : int
-            取得するコースのコース ID
+        Args:
+            course_id: 取得するコースのコース ID
+
+        Returns:
+            ManabaCourse: 取得するコースのコース ID
         """
         pass
 
@@ -201,7 +224,8 @@ class Manaba:
         """
         参加しているコース情報を取得する
 
-        :return: 参加しているコース情報
+        Returns:
+            list[ManabaCourse]: 参加しているコース情報
         """
         if not self.__logged_in:
             raise ManabaNotLoggedIn()
@@ -224,8 +248,19 @@ class Manaba:
             return self._get_courses_from_list(my_courses)
         elif correct_list_format == "timetable":
             return self._get_courses_from_timetable(my_courses, soup.find("table", {"class": "courselist"}))
+        else:
+            return []
 
     def _get_courses_from_thumbnail(self, my_courses: bs4.element.Tag) -> list[ManabaCourse]:
+        """
+        参加しているコース情報を取得する (サムネイル表示の場合)
+
+        Args:
+            my_courses: コース一覧のHTMLタグエレメント
+
+        Returns:
+            list[ManabaCourse]: 参加しているコース情報
+        """
         course_cards = my_courses.find_all("div", {"class": "coursecard"})
 
         courses = []
@@ -262,6 +297,15 @@ class Manaba:
         return courses
 
     def _get_courses_from_list(self, my_courses: bs4.element.Tag) -> list[ManabaCourse]:
+        """
+        参加しているコース情報を取得する (リスト表示の場合)
+
+        Args:
+            my_courses: コース一覧のHTMLタグエレメント
+
+        Returns:
+            list[ManabaCourse]: 参加しているコース情報
+        """
         course_rows = my_courses.find_all("tr", {"class": "courselist-c"})
 
         courses = []
@@ -281,6 +325,15 @@ class Manaba:
         return courses
 
     def _get_courses_from_timetable(self, my_courses: bs4.element.Tag, course_list: bs4.element.Tag) -> list[ManabaCourse]:
+        """
+        参加しているコース情報を取得する (曜日表示の場合)
+
+        Args:
+            my_courses: コース一覧のHTMLタグエレメント
+
+        Returns:
+            list[ManabaCourse]: 参加しているコース情報
+        """
         course_cards = my_courses.find_all("div", {"class": "courselistweekly-c"})
 
         courses = []
@@ -300,6 +353,15 @@ class Manaba:
 
     @staticmethod
     def _get_lamps_from_card(course_status: bs4.element.Tag) -> ManabaCourseLamps:
+        """
+        カードからステータスランプを取得する
+
+        Args:
+            course_status: カードのHTMLタグエレメント
+
+        Returns:
+            ManabaCourseLamps: コースステータスランプ
+        """
         course_statuses = course_status \
             .find_all("img")
         return ManabaCourseLamps(
