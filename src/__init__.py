@@ -244,9 +244,9 @@ class Manaba:
 
         if correct_list_format == "thumbnail":
             return self._get_courses_from_thumbnail(my_courses)
-        elif correct_list_format == "list":
+        if correct_list_format == "list":
             return self._get_courses_from_list(my_courses)
-        elif correct_list_format == "timetable":
+        if correct_list_format == "timetable":
             return self._get_courses_from_timetable(my_courses, soup.find("table", {"class": "courselist"}))
 
         return []
