@@ -248,8 +248,8 @@ class Manaba:
             return self._get_courses_from_list(my_courses)
         elif correct_list_format == "timetable":
             return self._get_courses_from_timetable(my_courses, soup.find("table", {"class": "courselist"}))
-        else:
-            return []
+
+        return []
 
     def _get_courses_from_thumbnail(self, my_courses: bs4.element.Tag) -> list[ManabaCourse]:
         """
@@ -377,4 +377,3 @@ class ManabaNotLoggedIn(Exception):
     """
     manaba にログインしている必要があるがしていない
     """
-    pass
