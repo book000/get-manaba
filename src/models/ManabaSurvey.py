@@ -8,25 +8,25 @@ from typing import Optional
 from src.models.ManabaTaskStatus import ManabaTaskStatus
 
 
-class ManabaQuery:
+class ManabaSurvey:
     """
-    manaba 小テスト
+    manaba アンケート
     """
 
-    def __init__(self, query_id: int, title: str, status: ManabaTaskStatus, status_lamp: bool,
+    def __init__(self, survey_id: int, title: str, status: ManabaTaskStatus, status_lamp: bool,
                  reception_start_time: Optional[datetime.datetime], reception_end_time: Optional[datetime.datetime]):
         """
-        manaba 小テスト
+        manaba アンケート
 
         Args:
-            query_id: 小テスト ID
-            title: 小テストタイトル
+            survey_id: アンケート ID
+            title: アンケートタイトル
             status: ステータス
             status_lamp: ステータスランプ
             reception_start_time: 開始日時
             reception_end_time: 終了日時
         """
-        self._query_id = query_id
+        self._survey_id = survey_id
         self._title = title
         self._status = status
         self._status_lamp = status_lamp
@@ -34,19 +34,19 @@ class ManabaQuery:
         self._reception_end_time = reception_end_time
 
     @property
-    def query_id(self) -> int:
+    def survey_id(self) -> int:
         """
-        小テスト ID
+        アンケート ID
 
         Returns:
             int: ID
         """
-        return self._query_id
+        return self._survey_id
 
     @property
     def title(self) -> str:
         """
-        小テストタイトル
+        アンケートタイトル
 
         Returns:
             str: タイトル

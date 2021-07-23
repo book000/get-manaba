@@ -14,9 +14,11 @@ import bs4.element
 import requests
 from bs4 import BeautifulSoup
 
+from src.models.ManabaReport import ManabaReport
 from src.models.ManabaCourse import ManabaCourse
 from src.models.ManabaCourseLamps import ManabaCourseLamps
 from src.models.ManabaQuery import ManabaQuery
+from src.models.ManabaSurvey import ManabaSurvey
 from src.models.ManabaTaskStatus import ManabaTaskStatus
 from src.models.ManabaTaskStatusFlag import ManabaTaskStatusFlag, get_task_status
 from src.models.ManabaTaskYourStatusFlag import get_your_status
@@ -232,76 +234,6 @@ class Manaba:
 
         return courses
 
-    def get_query(self, course_id: int) -> list[ManabaQuery]:
-        """
-        指定したコースの小テストを取得します。
-
-        Args:
-            course_id: 取得するコースのコース ID
-
-        Returns:
-            list[ManabaQuery]: コースの小テスト一覧
-        """
-        if not self.__logged_in:
-            raise ManabaNotLoggedIn()
-
-        response = self.session.get(urljoin(self.__base_url, "/ct/course_" + str(course_id)) + "_query")
-        if response.status_code == 404 or response.status_code == 403:
-            raise ManabaNotFound()
-        response.raise_for_status()
-        soup = BeautifulSoup(response.text, "html5lib")
-        std_list = soup.find("table", {"class": "stdlist"})
-        if std_list is None:
-            return []
-
-        query_tags = std_list.find_all("tr", class_=["row0", "row1"])
-        querys = []
-        for query_tag in query_tags:
-            query_td_tags = query_tag.findAll("td")
-            query_title = query_tag.find("h3").text.strip()
-            query_status_lamp = query_tag.find("h3").find("img").get("src").endswith("on.png")
-            query_link = query_tag.find("h3").find("a").get("href")
-            query_id: int = int(re.sub(r"course_[0-9]+_query_([0-9]+)", r"\1", query_link))
-
-            if len(query_td_tags[1].text.strip().split("\n")) == 1:
-                # 受付開始待ちなど1行しか状態がない
-                task_status = get_task_status(query_td_tags[1].text.strip().split("\n")[0])
-                if task_status is None:
-                    raise ManabaInternalError(
-                        "get_task_status return None (" + query_td_tags[1].text.strip().split("\n")[0] + ")")
-                query_status = ManabaTaskStatus(task_status, None)
-            elif len(query_td_tags[1].text.strip().split("\n")) == 2:
-                task_status = get_task_status(query_td_tags[1].text.strip().split("\n")[0])
-                if task_status is None:
-                    raise ManabaInternalError(
-                        "get_task_status return None (" + query_td_tags[1].text.strip().split("\n")[0] + ")")
-
-                your_status = get_your_status(query_td_tags[1].text.strip().split("\n")[1])
-                if your_status is None:
-                    raise ManabaInternalError(
-                        "your_status return None (" + query_td_tags[1].text.strip().split("\n")[1] + ")")
-
-                query_status = ManabaTaskStatus(task_status, your_status)
-            else:
-                raise ManabaInternalError("query_td_tags length not matched")
-
-            query_start_time = None if query_td_tags[2].text.strip() == "" else \
-                datetime.datetime.strptime(query_td_tags[2].text.strip() + " +0900", "%Y-%m-%d %H:%M %z").astimezone(
-                    JST)
-            query_end_time = None if query_td_tags[3].text.strip() == "" else \
-                datetime.datetime.strptime(query_td_tags[3].text.strip() + " +0900", "%Y-%m-%d %H:%M %z").astimezone(
-                    JST)
-
-            querys.append(ManabaQuery(
-                query_title,
-                query_status,
-                query_status_lamp,
-                query_start_time,
-                query_end_time
-            ))
-
-        return querys
-
     @staticmethod
     def _get_lamps_from_card(course_status: bs4.element.Tag) -> ManabaCourseLamps:
         """
@@ -322,6 +254,233 @@ class Manaba:
             course_statuses[3].get("src").endswith("on.png"),
             course_statuses[4].get("src").endswith("on.png")
         )
+
+    def get_querys(self, course_id: int) -> list[ManabaQuery]:
+        """
+        指定したコースの小テスト一覧を取得します。
+
+        Args:
+            course_id: 取得するコースのコース ID
+
+        Returns:
+            list[ManabaQuery]: コースの小テスト一覧
+        """
+        if not self.__logged_in:
+            raise ManabaNotLoggedIn()
+
+        response = self.session.get(urljoin(self.__base_url, "/ct/course_" + str(course_id)) + "_query")
+        if response.status_code == 404 or response.status_code == 403:
+            raise ManabaNotFound()
+        response.raise_for_status()
+        soup = BeautifulSoup(response.text, "html5lib")
+        std_list = soup.find("table", {"class": "stdlist"})
+        if std_list is None:
+            return []
+
+        query_tags = std_list.find_all("tr", class_=["row", "row0", "row1"])
+        querys = []
+        for query_tag in query_tags:
+            query_td_tags = query_tag.findAll("td")
+            query_title = query_tag.find("h3").text.strip()
+            query_status_lamp = query_tag.find("h3").find("img").get("src").endswith("on.png")
+            query_link = query_tag.find("h3").find("a").get("href")
+            query_id: int = int(re.sub(r"course_[0-9]+_query_([0-9]+)", r"\1", query_link))
+
+            if len(query_td_tags[1].text.strip().split("\n")) == 1:
+                # 受付開始待ちなど1行しか状態がない
+                task_status = get_task_status(query_td_tags[1].text.strip().split("\n")[0].strip())
+                if task_status is None:
+                    raise ManabaInternalError(
+                        "get_task_status return None (" + query_td_tags[1].text.strip().split("\n")[0].strip() + ")")
+                query_status = ManabaTaskStatus(task_status, None)
+            elif len(query_td_tags[1].text.strip().split("\n")) == 2:
+                task_status = get_task_status(query_td_tags[1].text.strip().split("\n")[0].strip())
+                if task_status is None:
+                    raise ManabaInternalError(
+                        "get_task_status return None (" + query_td_tags[1].text.strip().split("\n")[0].strip() + ")")
+
+                your_status = get_your_status(query_td_tags[1].text.strip().split("\n")[1].strip())
+                if your_status is None:
+                    raise ManabaInternalError(
+                        "your_status return None (" + query_td_tags[1].text.strip().split("\n")[1].strip() + ")")
+
+                query_status = ManabaTaskStatus(task_status, your_status)
+            else:
+                raise ManabaInternalError("query_td_tags length not matched")
+
+            query_start_time = None if query_td_tags[2].text.strip() == "" else \
+                datetime.datetime.strptime(query_td_tags[2].text.strip() + " +0900", "%Y-%m-%d %H:%M %z").astimezone(
+                    JST)
+            query_end_time = None if query_td_tags[3].text.strip() == "" else \
+                datetime.datetime.strptime(query_td_tags[3].text.strip() + " +0900", "%Y-%m-%d %H:%M %z").astimezone(
+                    JST)
+
+            querys.append(ManabaQuery(
+                query_id,
+                query_title,
+                query_status,
+                query_status_lamp,
+                query_start_time,
+                query_end_time
+            ))
+
+        return querys
+
+    def get_surveys(self, course_id: int) -> list[ManabaSurvey]:
+        """
+        指定したコースのアンケート一覧を取得します。
+
+        Args:
+            course_id: 取得するコースのコース ID
+
+        Returns:
+            list[ManabaSurvey]: コースのアンケート一覧
+        """
+        if not self.__logged_in:
+            raise ManabaNotLoggedIn()
+
+        response = self.session.get(urljoin(self.__base_url, "/ct/course_" + str(course_id)) + "_survey")
+        if response.status_code == 404 or response.status_code == 403:
+            raise ManabaNotFound()
+        response.raise_for_status()
+        soup = BeautifulSoup(response.text, "html5lib")
+        std_list = soup.find("table", {"class": "stdlist"})
+        if std_list is None:
+            return []
+
+        survey_tags = std_list.find_all("tr", class_=["row", "row0", "row1"])
+        surveys = []
+        for survey_tag in survey_tags:
+            survey_td_tags = survey_tag.findAll("td")
+            survey_title = survey_tag.find("h3").text.strip()
+            survey_status_lamp = survey_tag.find("h3").find("img").get("src").endswith("on.png")
+            survey_link = survey_tag.find("h3").find("a").get("href")
+            survey_id: int = int(re.sub(r"course_[0-9]+_survey_([0-9]+)", r"\1", survey_link))
+
+            if len(survey_td_tags[1].text.strip().split("\n")) == 1:
+                # 受付開始待ちなど1行しか状態がない
+                task_status = get_task_status(survey_td_tags[1].text.strip().split("\n")[0].strip())
+                if task_status is None:
+                    raise ManabaInternalError(
+                        "get_task_status return None (" + survey_td_tags[1].text.strip().split("\n")[0].strip() + ")")
+                survey_status = ManabaTaskStatus(task_status, None)
+            elif len(survey_td_tags[1].text.strip().split("\n")) == 2:
+                task_status = get_task_status(survey_td_tags[1].text.strip().split("\n")[0].strip())
+                if task_status is None:
+                    raise ManabaInternalError(
+                        "get_task_status return None (" + survey_td_tags[1].text.strip().split("\n")[0].strip() + ")")
+
+                your_status = get_your_status(survey_td_tags[1].text.strip().split("\n")[1].strip())
+                if your_status is None:
+                    raise ManabaInternalError(
+                        "your_status return None (" + survey_td_tags[1].text.strip().split("\n")[1].strip() + ")")
+
+                survey_status = ManabaTaskStatus(task_status, your_status)
+            else:
+                raise ManabaInternalError("survey_td_tags length not matched")
+
+            survey_start_time = None if survey_td_tags[2].text.strip() == "" else \
+                datetime.datetime.strptime(survey_td_tags[2].text.strip() + " +0900", "%Y-%m-%d %H:%M %z").astimezone(
+                    JST)
+            survey_end_time = None if survey_td_tags[3].text.strip() == "" else \
+                datetime.datetime.strptime(survey_td_tags[3].text.strip() + " +0900", "%Y-%m-%d %H:%M %z").astimezone(
+                    JST)
+
+            surveys.append(ManabaSurvey(
+                survey_id,
+                survey_title,
+                survey_status,
+                survey_status_lamp,
+                survey_start_time,
+                survey_end_time
+            ))
+
+        return surveys
+
+    def get_reports(self, course_id: int) -> list[ManabaReport]:
+        """
+        指定したコースのレポート一覧を取得します。
+
+        Args:
+            course_id: 取得するコースのコース ID
+
+        Returns:
+            list[ManabaReport]: コースのレポート一覧
+        """
+        if not self.__logged_in:
+            raise ManabaNotLoggedIn()
+
+        response = self.session.get(urljoin(self.__base_url, "/ct/course_" + str(course_id)) + "_report")
+        if response.status_code == 404 or response.status_code == 403:
+            raise ManabaNotFound()
+        response.raise_for_status()
+        soup = BeautifulSoup(response.text, "html5lib")
+        std_list = soup.find("table", {"class": "stdlist"})
+        if std_list is None:
+            return []
+
+        report_tags = std_list.find_all("tr", class_=["row", "row0", "row1"])
+        reports = []
+        for report_tag in report_tags:
+            report_td_tags = report_tag.findAll("td")
+            report_title = report_tag.find("h3").text.strip()
+            report_status_lamp = report_tag.find("h3").find("img").get("src").endswith("on.png")
+            report_link = report_tag.find("h3").find("a").get("href")
+            report_id: int = int(re.sub(r"course_[0-9]+_report_([0-9]+)", r"\1", report_link))
+
+            if len(report_td_tags[1].text.strip().split("\n")) == 1:
+                # 受付開始待ちなど1行しか状態がない
+                task_status = get_task_status(report_td_tags[1].text.strip().split("\n")[0].strip())
+                if task_status is None:
+                    raise ManabaInternalError(
+                        "get_task_status return None (" + report_td_tags[1].text.strip().split("\n")[0].strip() + ")")
+                report_status = ManabaTaskStatus(task_status, None)
+            elif len(report_td_tags[1].text.strip().split("\n")) == 2:
+                task_status = get_task_status(report_td_tags[1].text.strip().split("\n")[0].strip())
+                if task_status is None:
+                    raise ManabaInternalError(
+                        "get_task_status return None (" + report_td_tags[1].text.strip().split("\n")[0].strip() + ")")
+
+                your_status = get_your_status(report_td_tags[1].text.strip().split("\n")[1].strip())
+                if your_status is None:
+                    raise ManabaInternalError(
+                        "your_status return None (" + report_td_tags[1].text.strip().split("\n")[1].strip() + ")")
+
+                report_status = ManabaTaskStatus(task_status, your_status)
+            elif len(report_td_tags[1].text.strip().split("\n")) == 3:
+                task_status = get_task_status(report_td_tags[1].text.strip().split("\n")[0].strip())
+                if task_status is None:
+                    raise ManabaInternalError(
+                        "get_task_status return None (" + report_td_tags[1].text.strip().split("\n")[0].strip() + ")")
+
+                # report_td_tags[1].text.strip().split("\n")[1]: 編集中
+
+                your_status = get_your_status(report_td_tags[1].text.strip().split("\n")[2].strip())
+                if your_status is None:
+                    raise ManabaInternalError(
+                        "your_status return None (" + report_td_tags[1].text.strip().split("\n")[2].strip() + ")")
+
+                report_status = ManabaTaskStatus(task_status, your_status)
+            else:
+                raise ManabaInternalError("report_td_tags length not matched")
+
+            report_start_time = None if report_td_tags[2].text.strip() == "" else \
+                datetime.datetime.strptime(report_td_tags[2].text.strip() + " +0900", "%Y-%m-%d %H:%M %z").astimezone(
+                    JST)
+            report_end_time = None if report_td_tags[3].text.strip() == "" else \
+                datetime.datetime.strptime(report_td_tags[3].text.strip() + " +0900", "%Y-%m-%d %H:%M %z").astimezone(
+                    JST)
+
+            reports.append(ManabaReport(
+                report_id,
+                report_title,
+                report_status,
+                report_status_lamp,
+                report_start_time,
+                report_end_time
+            ))
+
+        return reports
 
 
 class ManabaNotLoggedIn(Exception):
