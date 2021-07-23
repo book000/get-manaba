@@ -260,7 +260,8 @@ class Manaba:
             query_td_tags = query_tag.findAll("td")
             query_title = query_tag.find("h3").text.strip()
             query_status_lamp = query_tag.find("h3").find("img").get("src").endswith("on.png")
-            query_id = query_tag.find("h3").find("a").get("href")
+            query_link = query_tag.find("h3").find("a").get("href")
+            query_id: int = int(re.sub(r"course_[0-9]+_query_([0-9]+)", r"\1", query_link))
 
             if len(query_td_tags[1].text.strip().split("\n")) == 1:
                 # 受付開始待ちなど1行しか状態がない
