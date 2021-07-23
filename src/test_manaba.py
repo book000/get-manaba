@@ -10,7 +10,7 @@ class TestManaba(TestCase):
         """
         setup test
         """
-        with open("config.json") as f:
+        with open("config.json", encoding="utf-8") as f:
             self.config = json.load(f)
 
         self.base_url = self.config["base_url"]
@@ -72,13 +72,25 @@ class TestManaba(TestCase):
                 "timetable" in self.courses_count:
             self.assertEquals(self.courses_count["thumbnail"], self.courses_count["timetable"])
 
+    def test_get_course(self) -> None:
+        if "test" not in self.config:
+            self.fail()
+
+        self.assertRaises(src.ManabaNotFound, self.manaba.get_course, 0)
+
+        course_id: int = self.config["test"]["course_id"]
+        course_name = self.config["test"]["course_name"]
+
+        course = self.manaba.get_course(course_id)
+        self.assertEqual(course_name, course.name)
+
 
 class TestManabaNotLoggedIn(TestCase):
     def setUp(self) -> None:
         """
         setup test
         """
-        with open("config.json") as f:
+        with open("config.json", encoding="utf-8") as f:
             self.config = json.load(f)
 
         base_url = self.config["base_url"]
@@ -86,3 +98,11 @@ class TestManabaNotLoggedIn(TestCase):
 
     def test_get_courses(self) -> None:
         self.assertRaises(src.ManabaNotLoggedIn, self.manaba.get_courses)
+
+    def test_get_course(self) -> None:
+        if "test" not in self.config:
+            self.fail()
+
+        course_id: int = self.config["test"]["course_id"]
+
+        self.assertRaises(src.ManabaNotLoggedIn, self.manaba.get_course, course_id)

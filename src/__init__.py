@@ -4,171 +4,31 @@ Library for get various information about manaba.
 
 manabaのさまざまな情報を取得するためのライブラリです。
 """
-
-from typing import Optional
+import datetime
+import re
+from enum import Enum, auto
+from typing import Optional, ValuesView
 from urllib.parse import parse_qs, urljoin, urlparse
 
 import bs4.element
 import requests
 from bs4 import BeautifulSoup
 
+from src.models.ManabaCourse import ManabaCourse
+from src.models.ManabaCourseLamps import ManabaCourseLamps
+from src.models.ManabaQuery import ManabaQuery
+from src.models.ManabaTaskStatus import ManabaTaskStatus
+from src.models.ManabaTaskStatusFlag import ManabaTaskStatusFlag, get_task_status
+from src.models.ManabaTaskYourStatusFlag import get_your_status
 
-class ManabaCourseLamps:
-    """
-    manaba コース一覧ページに表示されるランプ管理クラス
-    """
-    def __init__(self, news: bool, deadline: bool, grad: bool, thread: bool, individual: bool) -> None:
-        self._news = news
-        self._deadline = deadline
-        self._grad = grad
-        self._thread = thread
-        self._individual = individual
-
-    @property
-    def news(self) -> bool:
-        """
-        コースニュースランプ
-
-        Returns:
-            bool: newsランプが点いているか
-        """
-        return self._news
-
-    @property
-    def deadline(self) -> bool:
-        """
-        デッドラインランプ (課題ランプ)
-
-        Returns:
-            bool: デッドラインランプが点いているか
-        """
-        return self._deadline
-
-    @property
-    def grad(self) -> bool:
-        """
-        グラッドランプ (成績ランプ)
-
-        Returns:
-            bool: 成績ランプが点いているか
-        """
-        return self._grad
-
-    @property
-    def thread(self) -> bool:
-        """
-        スレッドランプ
-
-        Returns:
-            bool: スレッドランプが点いているか
-        """
-        return self._thread
-
-    @property
-    def individual(self) -> bool:
-        """
-        個人ランプ (コレクション)
-
-        Returns:
-            bool: 個人ランプが点いているか
-        """
-        return self._individual
-
-
-class ManabaCourse:
-    """
-    manaba コース情報
-    """
-    def __init__(self, name: str, course_id: int, year: Optional[int], lecture_at: Optional[str],
-                 teacher: Optional[str], status_lamps: ManabaCourseLamps):
-        """
-        manaba コース情報
-
-        Args:
-            name: コース名
-            course_id: コース ID
-            year: コース年度
-            lecture_at: 時限
-            teacher: 担当教員名
-            status_lamps: ステータスランプ
-        """
-        self._name = name
-        self._course_id = course_id
-        self._year = year
-        self._lecture_at = lecture_at
-        self._teacher = teacher
-        self._status_lamps = status_lamps
-
-    @property
-    def name(self) -> str:
-        """
-        コース名
-
-        Returns:
-            str: コースの名称
-        """
-        return self._name
-
-    @property
-    def course_id(self) -> int:
-        """
-        コース ID (URLの一部)
-        ※コースコードではない
-
-        Returns:
-            int: コース ID
-
-        """
-        return self._course_id
-
-    @property
-    def year(self) -> Optional[int]:
-        """
-        コースの年度
-
-        Returns:
-            Optional[int]: コースの年度
-
-        Notes:
-            コース一覧にて曜日表示を利用している場合、この項目は None になる可能性があります。
-        """
-        return self._year
-
-    @property
-    def lecture_at(self) -> Optional[str]:
-        """
-        コース年度・時限
-
-        Returns:
-            Optional[str]: コースの年度および時限 (取得できない場合 None)
-        """
-        return self._lecture_at
-
-    @property
-    def teacher(self) -> Optional[str]:
-        """
-        コースの担当教員名
-
-        Returns:
-            Optional[str]: コースの担当教員名 (取得できない場合 None)
-        """
-        return self._teacher
-
-    @property
-    def status_lamps(self) -> ManabaCourseLamps:
-        """
-        コースのステータスランプ
-
-        Returns:
-            ManabaCourseLamps: コースのステータスランプ
-        """
-        return self._status_lamps
+JST = datetime.timezone(datetime.timedelta(hours=+9), 'JST')
 
 
 class Manaba:
     """
     manaba 基本ライブラリ
     """
+
     def __init__(self, base_url: str) -> None:
         self.session = requests.Session()
         self.__base_url = base_url
@@ -218,7 +78,21 @@ class Manaba:
         Returns:
             ManabaCourse: 取得するコースのコース ID
         """
-        pass
+        if not self.__logged_in:
+            raise ManabaNotLoggedIn()
+
+        response = self.session.get(urljoin(self.__base_url, "/ct/course_" + str(course_id)))
+        if response.status_code == 404 or response.status_code == 403:
+            raise ManabaNotFound()
+        response.raise_for_status()
+        soup = BeautifulSoup(response.text, "html5lib")
+
+        title = soup.find("a", {"id": "coursename"}).text
+        teacher = soup.find("span", {"class": "courseteacher"}).text
+        lecture_at = soup.find("span", {"class": "coursedata-info"}).find("span").text
+        year = int(soup.find("span", {"class": "coursedata-info"}).text.replace(lecture_at, ""))
+
+        return ManabaCourse(title, course_id, year, lecture_at, teacher, None)
 
     def get_courses(self) -> list[ManabaCourse]:
         """
@@ -231,6 +105,9 @@ class Manaba:
             raise ManabaNotLoggedIn()
 
         response = self.session.get(urljoin(self.__base_url, "/ct/home_course"))
+        if response.status_code == 404 or response.status_code == 403:
+            raise ManabaNotFound()
+        response.raise_for_status()
         soup = BeautifulSoup(response.text, "html5lib")
 
         correct_list_format_href: str = soup \
@@ -268,7 +145,8 @@ class Manaba:
         for course_card in course_cards:
             title_link = course_card.find("div", {"class": "course-card-title"}).find("a")
             course_name = title_link.text
-            course_id = title_link.get("href")
+            course_link = title_link.get("href")
+            course_id: int = int(re.sub(r"course_([0-9]+)", r"\1", course_link))
 
             course_items: bs4.element.Tag = course_card.find("dl", {"class": "courseitems"})
             dts = course_items.find_all("dt", {"class": "courseitemtext"}, recursive=False)
@@ -312,7 +190,8 @@ class Manaba:
         course_row: bs4.element.Tag
         for course_row in course_rows:
             course_name = course_row.find("span", {"class": "courselist-title"}).text
-            course_id = course_row.find("span", {"class": "courselist-title"}).find("a").get("href")
+            course_link = course_row.find("span", {"class": "courselist-title"}).find("a").get("href")
+            course_id: int = int(re.sub(r"course_([0-9]+)", r"\1", course_link))
 
             status_lamps = self._get_lamps_from_card(course_row.find("div", {"class": "course-card-status"}))
             course_tds = course_row.find_all("td")
@@ -324,7 +203,8 @@ class Manaba:
 
         return courses
 
-    def _get_courses_from_timetable(self, my_courses: bs4.element.Tag, course_list: bs4.element.Tag) -> list[ManabaCourse]:
+    def _get_courses_from_timetable(self, my_courses: bs4.element.Tag, course_list: bs4.element.Tag) \
+            -> list[ManabaCourse]:
         """
         参加しているコース情報を取得する (曜日表示の場合)
 
@@ -340,7 +220,8 @@ class Manaba:
         course_row: bs4.element.Tag
         for course_card in course_cards:
             course_name = course_card.find("a").text
-            course_id = course_card.find("a").get("href")
+            course_link = course_card.find("a").get("href")
+            course_id: int = int(re.sub(r"course_([0-9]+)", r"\1", course_link))
 
             status_lamps = self._get_lamps_from_card(course_card)
 
@@ -350,6 +231,75 @@ class Manaba:
         courses.extend(other_courses)
 
         return courses
+
+    def get_query(self, course_id: int) -> list[ManabaQuery]:
+        """
+        指定したコースの小テストを取得します。
+
+        Args:
+            course_id: 取得するコースのコース ID
+
+        Returns:
+            list[ManabaQuery]: コースの小テスト一覧
+        """
+        if not self.__logged_in:
+            raise ManabaNotLoggedIn()
+
+        response = self.session.get(urljoin(self.__base_url, "/ct/course_" + str(course_id)) + "_query")
+        if response.status_code == 404 or response.status_code == 403:
+            raise ManabaNotFound()
+        response.raise_for_status()
+        soup = BeautifulSoup(response.text, "html5lib")
+        std_list = soup.find("table", {"class": "stdlist"})
+        if std_list is None:
+            return []
+
+        query_tags = std_list.find_all("tr", class_=["row0", "row1"])
+        querys = []
+        for query_tag in query_tags:
+            query_td_tags = query_tag.findAll("td")
+            query_title = query_tag.find("h3").text.strip()
+            query_status_lamp = query_tag.find("h3").find("img").get("src").endswith("on.png")
+            query_id = query_tag.find("h3").find("a").get("href")
+
+            if len(query_td_tags[1].text.strip().split("\n")) == 1:
+                # 受付開始待ちなど1行しか状態がない
+                task_status = get_task_status(query_td_tags[1].text.strip().split("\n")[0])
+                if task_status is None:
+                    raise ManabaInternalError(
+                        "get_task_status return None (" + query_td_tags[1].text.strip().split("\n")[0] + ")")
+                query_status = ManabaTaskStatus(task_status, None)
+            elif len(query_td_tags[1].text.strip().split("\n")) == 2:
+                task_status = get_task_status(query_td_tags[1].text.strip().split("\n")[0])
+                if task_status is None:
+                    raise ManabaInternalError(
+                        "get_task_status return None (" + query_td_tags[1].text.strip().split("\n")[0] + ")")
+
+                your_status = get_your_status(query_td_tags[1].text.strip().split("\n")[1])
+                if your_status is None:
+                    raise ManabaInternalError(
+                        "your_status return None (" + query_td_tags[1].text.strip().split("\n")[1] + ")")
+
+                query_status = ManabaTaskStatus(task_status, your_status)
+            else:
+                raise ManabaInternalError("query_td_tags length not matched")
+
+            query_start_time = None if query_td_tags[2].text.strip() == "" else \
+                datetime.datetime.strptime(query_td_tags[2].text.strip() + " +0900", "%Y-%m-%d %H:%M %z").astimezone(
+                    JST)
+            query_end_time = None if query_td_tags[3].text.strip() == "" else \
+                datetime.datetime.strptime(query_td_tags[3].text.strip() + " +0900", "%Y-%m-%d %H:%M %z").astimezone(
+                    JST)
+
+            querys.append(ManabaQuery(
+                query_title,
+                query_status,
+                query_status_lamp,
+                query_start_time,
+                query_end_time
+            ))
+
+        return querys
 
     @staticmethod
     def _get_lamps_from_card(course_status: bs4.element.Tag) -> ManabaCourseLamps:
@@ -376,4 +326,16 @@ class Manaba:
 class ManabaNotLoggedIn(Exception):
     """
     manaba にログインしている必要があるがしていない
+    """
+
+
+class ManabaNotFound(Exception):
+    """
+    manaba のコース等ページにアクセスしたが、そのページが見つからなかった
+    """
+
+
+class ManabaInternalError(Exception):
+    """
+    処理に失敗した
     """
