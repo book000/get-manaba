@@ -12,8 +12,13 @@ class ManabaCourse:
     manaba コース情報
     """
 
-    def __init__(self, name: str, course_id: int, year: Optional[int], lecture_at: Optional[str],
-                 teacher: Optional[str], status_lamps: Optional[ManabaCourseLamps]):
+    def __init__(self,
+                 name: str,
+                 course_id: int,
+                 year: Optional[int],
+                 lecture_at: Optional[str],
+                 teacher: Optional[str],
+                 status_lamps: Optional[ManabaCourseLamps]):
         """
         manaba コース情報
 

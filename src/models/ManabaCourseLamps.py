@@ -8,7 +8,12 @@ class ManabaCourseLamps:
     manaba コース一覧ページに表示されるランプ管理クラス
     """
 
-    def __init__(self, news: bool, deadline: bool, grad: bool, thread: bool, individual: bool) -> None:
+    def __init__(self,
+                 news: bool,
+                 deadline: bool,
+                 grad: bool,
+                 thread: bool,
+                 individual: bool) -> None:
         self._news = news
         self._deadline = deadline
         self._grad = grad

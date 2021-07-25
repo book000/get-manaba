@@ -13,8 +13,13 @@ class ManabaReport:
     manaba レポート
     """
 
-    def __init__(self, report_id: int, title: str, status: ManabaTaskStatus, status_lamp: bool,
-                 reception_start_time: Optional[datetime.datetime], reception_end_time: Optional[datetime.datetime]):
+    def __init__(self,
+                 report_id: int,
+                 title: str,
+                 status: ManabaTaskStatus,
+                 status_lamp: bool,
+                 reception_start_time: Optional[datetime.datetime],
+                 reception_end_time: Optional[datetime.datetime]):
         """
         manaba レポート
 

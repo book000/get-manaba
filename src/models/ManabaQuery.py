@@ -13,8 +13,13 @@ class ManabaQuery:
     manaba 小テスト
     """
 
-    def __init__(self, query_id: int, title: str, status: ManabaTaskStatus, status_lamp: bool,
-                 reception_start_time: Optional[datetime.datetime], reception_end_time: Optional[datetime.datetime]):
+    def __init__(self,
+                 query_id: int,
+                 title: str,
+                 status: ManabaTaskStatus,
+                 status_lamp: bool,
+                 reception_start_time: Optional[datetime.datetime],
+                 reception_end_time: Optional[datetime.datetime]):
         """
         manaba 小テスト
 

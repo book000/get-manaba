@@ -6,22 +6,25 @@ manabaのさまざまな情報を取得するためのライブラリです。
 """
 import datetime
 import re
-from enum import Enum, auto
-from typing import Optional, ValuesView
+from typing import Optional, Union
 from urllib.parse import parse_qs, urljoin, urlparse
 
 import bs4.element
 import requests
 from bs4 import BeautifulSoup
 
-from src.models.ManabaReport import ManabaReport
 from src.models.ManabaCourse import ManabaCourse
 from src.models.ManabaCourseLamps import ManabaCourseLamps
+from src.models.ManabaGradePosition import ManabaGradePosition
+from src.models.ManabaPortfolioType import get_portfolio_type
 from src.models.ManabaQuery import ManabaQuery
+from src.models.ManabaQueryDetails import ManabaQueryDetails
+from src.models.ManabaReport import ManabaReport
+from src.models.ManabaResultViewType import get_result_view_type
 from src.models.ManabaSurvey import ManabaSurvey
 from src.models.ManabaTaskStatus import ManabaTaskStatus
 from src.models.ManabaTaskStatusFlag import ManabaTaskStatusFlag, get_task_status
-from src.models.ManabaTaskYourStatusFlag import get_your_status
+from src.models.ManabaTaskYourStatusFlag import ManabaTaskYourStatusFlag, get_your_status
 
 JST = datetime.timezone(datetime.timedelta(hours=+9), 'JST')
 
@@ -31,12 +34,15 @@ class Manaba:
     manaba 基本ライブラリ
     """
 
-    def __init__(self, base_url: str) -> None:
+    def __init__(self,
+                 base_url: str) -> None:
         self.session = requests.Session()
         self.__base_url = base_url
         self.__logged_in = False
 
-    def login(self, username: str, password: str) -> bool:
+    def login(self,
+              username: str,
+              password: str) -> bool:
         """
         manaba にログインする
 
@@ -70,7 +76,8 @@ class Manaba:
 
         return self.__logged_in
 
-    def get_course(self, course_id: int) -> ManabaCourse:
+    def get_course(self,
+                   course_id: int) -> ManabaCourse:
         """
         指定したコース ID のコース情報(ManabaCourse)を取得します。
 
@@ -130,7 +137,8 @@ class Manaba:
 
         return []
 
-    def _get_courses_from_thumbnail(self, my_courses: bs4.element.Tag) -> list[ManabaCourse]:
+    def _get_courses_from_thumbnail(self,
+                                    my_courses: bs4.element.Tag) -> list[ManabaCourse]:
         """
         参加しているコース情報を取得する (サムネイル表示の場合)
 
@@ -176,7 +184,8 @@ class Manaba:
 
         return courses
 
-    def _get_courses_from_list(self, my_courses: bs4.element.Tag) -> list[ManabaCourse]:
+    def _get_courses_from_list(self,
+                               my_courses: bs4.element.Tag) -> list[ManabaCourse]:
         """
         参加しているコース情報を取得する (リスト表示の場合)
 
@@ -205,7 +214,9 @@ class Manaba:
 
         return courses
 
-    def _get_courses_from_timetable(self, my_courses: bs4.element.Tag, course_list: bs4.element.Tag) \
+    def _get_courses_from_timetable(self,
+                                    my_courses: bs4.element.Tag,
+                                    course_list: bs4.element.Tag) \
             -> list[ManabaCourse]:
         """
         参加しているコース情報を取得する (曜日表示の場合)
@@ -255,7 +266,8 @@ class Manaba:
             course_statuses[4].get("src").endswith("on.png")
         )
 
-    def get_querys(self, course_id: int) -> list[ManabaQuery]:
+    def get_querys(self,
+                   course_id: int) -> list[ManabaQuery]:
         """
         指定したコースの小テスト一覧を取得します。
 
@@ -286,34 +298,10 @@ class Manaba:
             query_link = query_tag.find("h3").find("a").get("href")
             query_id: int = int(re.sub(r"course_[0-9]+_query_([0-9]+)", r"\1", query_link))
 
-            if len(query_td_tags[1].text.strip().split("\n")) == 1:
-                # 受付開始待ちなど1行しか状態がない
-                task_status = get_task_status(query_td_tags[1].text.strip().split("\n")[0].strip())
-                if task_status is None:
-                    raise ManabaInternalError(
-                        "get_task_status return None (" + query_td_tags[1].text.strip().split("\n")[0].strip() + ")")
-                query_status = ManabaTaskStatus(task_status, None)
-            elif len(query_td_tags[1].text.strip().split("\n")) == 2:
-                task_status = get_task_status(query_td_tags[1].text.strip().split("\n")[0].strip())
-                if task_status is None:
-                    raise ManabaInternalError(
-                        "get_task_status return None (" + query_td_tags[1].text.strip().split("\n")[0].strip() + ")")
+            query_status = self._parse_status(query_td_tags[1].text.strip())
 
-                your_status = get_your_status(query_td_tags[1].text.strip().split("\n")[1].strip())
-                if your_status is None:
-                    raise ManabaInternalError(
-                        "your_status return None (" + query_td_tags[1].text.strip().split("\n")[1].strip() + ")")
-
-                query_status = ManabaTaskStatus(task_status, your_status)
-            else:
-                raise ManabaInternalError("query_td_tags length not matched")
-
-            query_start_time = None if query_td_tags[2].text.strip() == "" else \
-                datetime.datetime.strptime(query_td_tags[2].text.strip() + " +0900", "%Y-%m-%d %H:%M %z").astimezone(
-                    JST)
-            query_end_time = None if query_td_tags[3].text.strip() == "" else \
-                datetime.datetime.strptime(query_td_tags[3].text.strip() + " +0900", "%Y-%m-%d %H:%M %z").astimezone(
-                    JST)
+            query_start_time = self._process_datetime(query_td_tags[2].text.strip())
+            query_end_time = self._process_datetime(query_td_tags[3].text.strip())
 
             querys.append(ManabaQuery(
                 query_id,
@@ -326,7 +314,83 @@ class Manaba:
 
         return querys
 
-    def get_surveys(self, course_id: int) -> list[ManabaSurvey]:
+    def get_query(self,
+                  course_id: int,
+                  query_id: int) -> ManabaQueryDetails:
+        """
+        指定したコース・小テスト ID の小テスト詳細情報を取得します。
+
+        Args:
+            course_id: 取得する小テストのコース ID
+            query_id: 取得する小テストの小テスト ID
+
+        Returns:
+            ManabaQueryDetails: 小テスト詳細情報
+        """
+
+        if not self.__logged_in:
+            raise ManabaNotLoggedIn()
+
+        response = self.session.get(
+            urljoin(self.__base_url, "/ct/course_" + str(course_id)) + "_query_" + str(query_id))
+        if response.status_code == 404 or response.status_code == 403:
+            raise ManabaNotFound()
+        response.raise_for_status()
+        soup = BeautifulSoup(response.text, "html5lib")
+
+        query_title = soup.find("tr", {"class": "title"}).text.strip()
+
+        details = {}
+        detail_trs = soup.find("table", {"class": "stdlist-query"}).find_all("tr")
+        for tr in detail_trs:
+            if tr.get("class") == "title":
+                continue
+
+            th = tr.find("th")
+            td = tr.find("td")
+            if th is None or td is None:
+                continue
+
+            details[th.text.strip()] = td.text.strip()
+
+        portfolio_type = get_portfolio_type(self._opt_value(details, "ポートフォリオ"))
+        result_view_type = get_result_view_type(self._opt_value(details, "採点結果と正解の公開"))
+
+        status_value = self._opt_value(details, "状態")
+        status = None
+        if status_value is not None:
+            if soup.find("table", {"class": "stdlist-query"}).find("span", {"class": "expired"}) is not None:
+                status = ManabaTaskStatus(ManabaTaskStatusFlag.CLOSED, ManabaTaskYourStatusFlag.UNSUBMITTED)
+            else:
+                status = self._parse_status(status_value)
+
+        gradelist = soup.find("table", {"class": "gradelist"})
+        grade: Union[int, None] = None
+        position = None
+        if gradelist is not None:
+            grade_str = gradelist.find("td", {"class": "grade"}).text
+            try:
+                grade = int(grade_str)
+            except ValueError:
+                grade = None
+
+            position = self._parse_grade_bar(gradelist)
+
+        return ManabaQueryDetails(
+            query_id,
+            query_title,
+            self._opt_value(details, "課題に関する説明"),
+            self._process_datetime(self._opt_value(details, "受付開始日時")),
+            self._process_datetime(self._opt_value(details, "受付終了日時")),
+            portfolio_type,
+            result_view_type,
+            status,
+            grade,
+            position
+        )
+
+    def get_surveys(self,
+                    course_id: int) -> list[ManabaSurvey]:
         """
         指定したコースのアンケート一覧を取得します。
 
@@ -357,34 +421,10 @@ class Manaba:
             survey_link = survey_tag.find("h3").find("a").get("href")
             survey_id: int = int(re.sub(r"course_[0-9]+_survey_([0-9]+)", r"\1", survey_link))
 
-            if len(survey_td_tags[1].text.strip().split("\n")) == 1:
-                # 受付開始待ちなど1行しか状態がない
-                task_status = get_task_status(survey_td_tags[1].text.strip().split("\n")[0].strip())
-                if task_status is None:
-                    raise ManabaInternalError(
-                        "get_task_status return None (" + survey_td_tags[1].text.strip().split("\n")[0].strip() + ")")
-                survey_status = ManabaTaskStatus(task_status, None)
-            elif len(survey_td_tags[1].text.strip().split("\n")) == 2:
-                task_status = get_task_status(survey_td_tags[1].text.strip().split("\n")[0].strip())
-                if task_status is None:
-                    raise ManabaInternalError(
-                        "get_task_status return None (" + survey_td_tags[1].text.strip().split("\n")[0].strip() + ")")
+            survey_status = self._parse_status(survey_td_tags[1].text.strip())
 
-                your_status = get_your_status(survey_td_tags[1].text.strip().split("\n")[1].strip())
-                if your_status is None:
-                    raise ManabaInternalError(
-                        "your_status return None (" + survey_td_tags[1].text.strip().split("\n")[1].strip() + ")")
-
-                survey_status = ManabaTaskStatus(task_status, your_status)
-            else:
-                raise ManabaInternalError("survey_td_tags length not matched")
-
-            survey_start_time = None if survey_td_tags[2].text.strip() == "" else \
-                datetime.datetime.strptime(survey_td_tags[2].text.strip() + " +0900", "%Y-%m-%d %H:%M %z").astimezone(
-                    JST)
-            survey_end_time = None if survey_td_tags[3].text.strip() == "" else \
-                datetime.datetime.strptime(survey_td_tags[3].text.strip() + " +0900", "%Y-%m-%d %H:%M %z").astimezone(
-                    JST)
+            survey_start_time = self._process_datetime(survey_td_tags[2].text.strip())
+            survey_end_time = self._process_datetime(survey_td_tags[3].text.strip())
 
             surveys.append(ManabaSurvey(
                 survey_id,
@@ -397,7 +437,8 @@ class Manaba:
 
         return surveys
 
-    def get_reports(self, course_id: int) -> list[ManabaReport]:
+    def get_reports(self,
+                    course_id: int) -> list[ManabaReport]:
         """
         指定したコースのレポート一覧を取得します。
 
@@ -428,48 +469,10 @@ class Manaba:
             report_link = report_tag.find("h3").find("a").get("href")
             report_id: int = int(re.sub(r"course_[0-9]+_report_([0-9]+)", r"\1", report_link))
 
-            if len(report_td_tags[1].text.strip().split("\n")) == 1:
-                # 受付開始待ちなど1行しか状態がない
-                task_status = get_task_status(report_td_tags[1].text.strip().split("\n")[0].strip())
-                if task_status is None:
-                    raise ManabaInternalError(
-                        "get_task_status return None (" + report_td_tags[1].text.strip().split("\n")[0].strip() + ")")
-                report_status = ManabaTaskStatus(task_status, None)
-            elif len(report_td_tags[1].text.strip().split("\n")) == 2:
-                task_status = get_task_status(report_td_tags[1].text.strip().split("\n")[0].strip())
-                if task_status is None:
-                    raise ManabaInternalError(
-                        "get_task_status return None (" + report_td_tags[1].text.strip().split("\n")[0].strip() + ")")
+            report_status = self._parse_status(report_td_tags[1].text.strip())
 
-                your_status = get_your_status(report_td_tags[1].text.strip().split("\n")[1].strip())
-                if your_status is None:
-                    raise ManabaInternalError(
-                        "your_status return None (" + report_td_tags[1].text.strip().split("\n")[1].strip() + ")")
-
-                report_status = ManabaTaskStatus(task_status, your_status)
-            elif len(report_td_tags[1].text.strip().split("\n")) == 3:
-                task_status = get_task_status(report_td_tags[1].text.strip().split("\n")[0].strip())
-                if task_status is None:
-                    raise ManabaInternalError(
-                        "get_task_status return None (" + report_td_tags[1].text.strip().split("\n")[0].strip() + ")")
-
-                # report_td_tags[1].text.strip().split("\n")[1]: 編集中
-
-                your_status = get_your_status(report_td_tags[1].text.strip().split("\n")[2].strip())
-                if your_status is None:
-                    raise ManabaInternalError(
-                        "your_status return None (" + report_td_tags[1].text.strip().split("\n")[2].strip() + ")")
-
-                report_status = ManabaTaskStatus(task_status, your_status)
-            else:
-                raise ManabaInternalError("report_td_tags length not matched")
-
-            report_start_time = None if report_td_tags[2].text.strip() == "" else \
-                datetime.datetime.strptime(report_td_tags[2].text.strip() + " +0900", "%Y-%m-%d %H:%M %z").astimezone(
-                    JST)
-            report_end_time = None if report_td_tags[3].text.strip() == "" else \
-                datetime.datetime.strptime(report_td_tags[3].text.strip() + " +0900", "%Y-%m-%d %H:%M %z").astimezone(
-                    JST)
+            report_start_time = self._process_datetime(report_td_tags[2].text.strip())
+            report_end_time = self._process_datetime(report_td_tags[3].text.strip())
 
             reports.append(ManabaReport(
                 report_id,
@@ -481,6 +484,83 @@ class Manaba:
             ))
 
         return reports
+
+    @staticmethod
+    def _process_datetime(datetime_str: Optional[str]) -> Optional[datetime.datetime]:
+        if datetime_str is None or datetime_str == "":
+            return None
+        datetime_format = "%Y-%m-%d %H:%M:%S %z" if len(datetime_str) == 19 else "%Y-%m-%d %H:%M %z"
+        return datetime.datetime.strptime(datetime_str + " +0900", datetime_format).astimezone(JST)
+
+    @staticmethod
+    def _opt_value(items: dict[str, str],
+                   key: str) -> Optional[str]:
+        if key not in items or items[key] is None:
+            return None
+        return items[key]
+
+    @staticmethod
+    def _parse_status(status_text: str) -> ManabaTaskStatus:
+        if len(status_text.split("\n")) == 1:
+            # 受付開始待ちなど1行しか状態がない
+            task_status = get_task_status(status_text.split("\n")[0].strip())
+            if task_status is None:
+                raise ManabaInternalError(
+                    "get_task_status return None (" + status_text.split("\n")[0].strip() + ")")
+            return ManabaTaskStatus(task_status, None)
+
+        if len(status_text.split("\n")) == 2:
+            task_status = get_task_status(status_text.split("\n")[0].strip())
+            if task_status is None:
+                raise ManabaInternalError(
+                    "get_task_status return None (" + status_text.split("\n")[0].strip() + ")")
+
+            your_status = get_your_status(status_text.split("\n")[1].strip())
+            if your_status is None:
+                raise ManabaInternalError(
+                    "your_status return None (" + status_text.split("\n")[1].strip() + ")")
+
+            return ManabaTaskStatus(task_status, your_status)
+
+        raise ManabaInternalError("td_tags length not matched (" + str(len(status_text.split("\n"))) + ")")
+
+    @staticmethod
+    def _parse_grade_bar(gradelist: bs4.element.Tag) -> Optional[ManabaGradePosition]:
+        bar_form = gradelist.find("table", {"class": "form"})
+        if bar_form is None:
+            return None
+
+        bars = bar_form.find_all("td")
+        if len(bars) == 1:
+            below_percent = None
+            my_position_percent = int(bars[0].get("width").replace("%", ""))
+            above_percent = None
+
+            return ManabaGradePosition(below_percent, my_position_percent, above_percent)
+
+        if len(bars) == 2:
+            if bars[0].get("class") is not None and "gradebar" in bars[0].get("class"):
+                # 最低点
+                below_percent = None
+                my_position_percent = int(bars[0].get("width").replace("%", ""))
+                above_percent = int(bars[1].get("width").replace("%", ""))
+            elif bars[1].get("class") is not None and "gradebar" in bars[1].get("class"):
+                below_percent = int(bars[0].get("width").replace("%", ""))
+                my_position_percent = int(bars[1].get("width").replace("%", ""))
+                above_percent = None
+            else:
+                raise ManabaInternalError("_parse_grade_bar not found gradebar")
+
+            return ManabaGradePosition(below_percent, my_position_percent, above_percent)
+
+        if len(bars) == 3:
+            below_percent = int(bars[0].get("width").replace("%", ""))
+            my_position_percent = int(bars[1].get("width").replace("%", ""))
+            above_percent = int(bars[2].get("width").replace("%", ""))
+
+            return ManabaGradePosition(below_percent, my_position_percent, above_percent)
+
+        raise ManabaInternalError("_parse_grade_bar not parseable")
 
 
 class ManabaNotLoggedIn(Exception):

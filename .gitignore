@@ -2,3 +2,4 @@ venv
 .idea
 config.json
 *.pyc
+test.py
