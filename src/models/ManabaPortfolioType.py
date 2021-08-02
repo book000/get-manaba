@@ -29,7 +29,7 @@ def get_portfolio_type_from_name(name: Optional[str]) -> Optional[ManabaPortfoli
         name: メンバー名称
 
     Returns:
-        ManabaPortfolioType: 該当する列挙メンバー、ないか、入力値が None なら None
+        Optional[ManabaPortfolioType]: 該当する列挙メンバー、ないか、入力値が None なら None
     """
     if name is None:
         return None

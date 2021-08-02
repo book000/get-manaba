@@ -21,6 +21,25 @@ class ManabaTaskYourStatusFlag(Enum):
         self.showing_name = showing_name
 
 
+def get_your_status_from_name(name: Optional[str]) -> Optional[ManabaTaskYourStatusFlag]:
+    """
+    メンバー名称を指定して列挙メンバーを取得します
+
+    Args:
+        name: メンバー名称
+
+    Returns:
+        Optional[ManabaTaskYourStatusFlag]: 該当する列挙メンバー、ないか、入力値が None なら None
+    """
+    if name is None:
+        return None
+
+    for e in ManabaTaskYourStatusFlag:
+        if e.name == name:
+            return e
+    return None
+
+
 def get_your_status(showing_name: str) -> Optional[ManabaTaskYourStatusFlag]:
     """
     表示名を指定して列挙メンバーを取得します (合致、もしくは前方一致)

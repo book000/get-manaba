@@ -2,9 +2,12 @@ import json
 from unittest import TestCase
 
 import src
-from src import Manaba, get_task_status, get_your_status
+from src import Manaba
 from src.models.ManabaPortfolioType import get_portfolio_type_from_name
 from src.models.ManabaResultViewType import get_result_view_type_from_name
+from src.models.ManabaStudentReSubmitType import get_student_resubmit_type_from_name
+from src.models.ManabaTaskStatusFlag import get_task_status_from_name
+from src.models.ManabaTaskYourStatusFlag import get_your_status_from_name
 
 
 class TestManaba(TestCase):
@@ -141,9 +144,9 @@ class TestManaba(TestCase):
             self.assertNotEqual(None, reception_end_time, "テストデータとして渡された reception_end_time が正しくありません。")
             portfolio_type = get_portfolio_type_from_name(test["portfolio_type"])
             result_view_type = get_result_view_type_from_name(test["result_view_type"])
-            task_status = get_task_status(test["status"]["task_status"])
+            task_status = get_task_status_from_name(test["status"]["task_status"])
             self.assertNotEqual(None, task_status, "テストデータとして渡された task_status が正しくありません。")
-            your_status = get_your_status(test["status"]["your_status"])
+            your_status = get_your_status_from_name(test["status"]["your_status"])
             self.assertNotEqual(None, your_status, "テストデータとして渡された task_status が正しくありません。")
             grade: int = test["grade"]
             below_percent = test["position"]["below_percent"]
@@ -188,6 +191,44 @@ class TestManaba(TestCase):
             survey_names = list(map(lambda x: x.title, surveys))
             self.assertIn(survey_id, survey_ids, "テストデータのアンケートIDに合致するタイトルが見つかりません。")
             self.assertIn(survey_title, survey_names, "テストデータのアンケートタイトルに合致するタイトルが見つかりません。")
+
+    def test_get_survey(self) -> None:
+        if "tests" not in self.config:
+            self.fail("コンフィグにテストデータがないため、失敗しました。")
+        if "test_get_survey" not in self.config["tests"]:
+            self.fail("コンフィグにこのテスト用のテストデータがないため、失敗しました。")
+
+        self.assertRaises(src.ManabaNotFound, self.manaba.get_query,
+                          self.config["tests"]["test_get_survey"][0]["course_id"], 0)
+
+        for test in self.config["tests"]["test_get_survey"]:
+            course_id: int = test["course_id"]
+            survey_id: int = test["survey_id"]
+            survey_title = test["survey_title"]
+            print("survey_title:" + survey_title, "course_id:" + str(course_id), "survey_id:" + str(survey_id))
+
+            reception_start_time = Manaba.process_datetime(test["reception_start_time"])
+            self.assertNotEqual(None, reception_start_time, "テストデータとして渡された reception_start_time が正しくありません。")
+            reception_end_time = Manaba.process_datetime(test["reception_end_time"])
+            self.assertNotEqual(None, reception_end_time, "テストデータとして渡された reception_end_time が正しくありません。")
+            portfolio_type = get_portfolio_type_from_name(test["portfolio_type"])
+            student_resubmit_type = get_student_resubmit_type_from_name(test["student_resubmit_type"])
+            self.assertNotEqual(None, student_resubmit_type, "テストデータとして渡された student_resubmit_type が正しくありません。")
+            task_status = get_task_status_from_name(test["status"]["task_status"])
+            self.assertNotEqual(None, task_status, "テストデータとして渡された task_status が正しくありません。")
+            your_status = get_your_status_from_name(test["status"]["your_status"])
+            self.assertNotEqual(None, your_status, "テストデータとして渡された task_status が正しくありません。")
+
+            survey = self.manaba.get_survey(course_id, survey_id)
+            self.assertEqual(survey_title, survey.title, "課題タイトルが一致しません。")
+            self.assertEqual(reception_start_time, survey.reception_start_time, "受付開始時刻が一致しません。")
+            self.assertEqual(reception_end_time, survey.reception_end_time, "受付終了時刻が一致しません。")
+            self.assertEqual(portfolio_type, survey.portfolio_type, "ポートフォリオ種別が一致しません。")
+            self.assertEqual(student_resubmit_type, survey.student_resubmit_type, "学生による再提出の許可が一致しません。")
+            self.assertNotEqual(None, survey.status, "課題の状態を取得できませんでした。")
+            assert survey.status is not None
+            self.assertEqual(task_status, survey.status.task_status, "課題の状態が一致しません。")
+            self.assertEqual(your_status, survey.status.your_status, "課題の提出状態が一致しません。")
 
     def test_get_reports(self) -> None:
         if "tests" not in self.config:

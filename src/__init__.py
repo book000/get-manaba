@@ -442,6 +442,69 @@ class Manaba:
 
         return surveys
 
+    def get_survey(self,
+                   course_id: int,
+                   survey_id: int) -> ManabaSurveyDetails:
+        """
+        指定したコース・アンケート ID のアンケート詳細情報を取得します。
+
+        Args:
+            course_id: 取得する小テストのコース ID
+            survey_id:取得する小テストのアンケート ID
+
+        Returns:
+            ManabaSurveyDetails: アンケート詳細情報
+        """
+
+        if not self.__logged_in:
+            raise ManabaNotLoggedIn()
+
+        response = self.session.get(
+            urljoin(self.__base_url, "/ct/course_" + str(course_id)) + "_survey_" + str(survey_id))
+        if response.status_code == 404 or response.status_code == 403:
+            raise ManabaNotFound()
+        response.raise_for_status()
+        soup = BeautifulSoup(response.text, "html5lib")
+
+        if soup.find("table", {"class": "stdlist-query"}) is None:
+            raise ManabaNotFound()
+
+        survey_title = soup.find("tr", {"class": "title"}).text.strip()
+
+        details = {}
+        detail_trs = soup.find("table", {"class": "stdlist-query"}).find_all("tr")
+        for tr in detail_trs:
+            if tr.get("class") == "title":
+                continue
+
+            th = tr.find("th")
+            td = tr.find("td")
+            if th is None or td is None:
+                continue
+
+            details[th.text.strip()] = td.text.strip()
+
+        portfolio_type = get_portfolio_type(self._opt_value(details, "ポートフォリオ"))
+        student_resubmit_type = get_student_resubmit_type(self._opt_value(details, "学生による再提出の許可"))
+
+        status_value = self._opt_value(details, "状態")
+        status = None
+        if status_value is not None:
+            if soup.find("table", {"class": "stdlist-query"}).find("span", {"class": "expired"}) is not None:
+                status = ManabaTaskStatus(ManabaTaskStatusFlag.CLOSED, ManabaTaskYourStatusFlag.UNSUBMITTED)
+            else:
+                status = self._parse_status(status_value)
+
+        return ManabaSurveyDetails(
+            survey_id,
+            survey_title,
+            self.process_datetime(self._opt_value(details, "受付開始日時")),
+            self.process_datetime(self._opt_value(details, "受付終了日時")),
+            portfolio_type,
+            student_resubmit_type,
+            status
+        )
+
     def get_reports(self,
                     course_id: int) -> list[ManabaReport]:
         """
