@@ -11,10 +11,10 @@ class ManabaGradePosition:
 
     def __init__(self,
                  below_percent: Optional[int],
-                 my_position_percent: int,
+                 _my_pos_percent: int,
                  above_percent: Optional[int]):
         self._below_percent = below_percent
-        self._my_position_percent = my_position_percent
+        self._my_pos_percent = _my_pos_percent
         self._above_percent = above_percent
 
     @property
@@ -28,14 +28,14 @@ class ManabaGradePosition:
         return self._below_percent
 
     @property
-    def my_position_percent(self) -> int:
+    def my_pos_percent(self) -> int:
         """
         自分の成績と同じメンバーの割合
 
         Returns:
             int: 自分の成績と同じメンバーの割合
         """
-        return self._my_position_percent
+        return self._my_pos_percent
 
     @property
     def above_percent(self) -> Optional[int]:

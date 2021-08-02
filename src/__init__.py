@@ -21,7 +21,9 @@ from src.models.ManabaQuery import ManabaQuery
 from src.models.ManabaQueryDetails import ManabaQueryDetails
 from src.models.ManabaReport import ManabaReport
 from src.models.ManabaResultViewType import get_result_view_type
+from src.models.ManabaStudentReSubmitType import get_student_resubmit_type
 from src.models.ManabaSurvey import ManabaSurvey
+from src.models.ManabaSurveyDetails import ManabaSurveyDetails
 from src.models.ManabaTaskStatus import ManabaTaskStatus
 from src.models.ManabaTaskStatusFlag import ManabaTaskStatusFlag, get_task_status
 from src.models.ManabaTaskYourStatusFlag import ManabaTaskYourStatusFlag, get_your_status
@@ -300,8 +302,8 @@ class Manaba:
 
             query_status = self._parse_status(query_td_tags[1].text.strip())
 
-            query_start_time = self._process_datetime(query_td_tags[2].text.strip())
-            query_end_time = self._process_datetime(query_td_tags[3].text.strip())
+            query_start_time = self.process_datetime(query_td_tags[2].text.strip())
+            query_end_time = self.process_datetime(query_td_tags[3].text.strip())
 
             querys.append(ManabaQuery(
                 query_id,
@@ -337,6 +339,9 @@ class Manaba:
             raise ManabaNotFound()
         response.raise_for_status()
         soup = BeautifulSoup(response.text, "html5lib")
+
+        if soup.find("table", {"class": "stdlist-query"}) is None:
+            raise ManabaNotFound()
 
         query_title = soup.find("tr", {"class": "title"}).text.strip()
 
@@ -380,8 +385,8 @@ class Manaba:
             query_id,
             query_title,
             self._opt_value(details, "課題に関する説明"),
-            self._process_datetime(self._opt_value(details, "受付開始日時")),
-            self._process_datetime(self._opt_value(details, "受付終了日時")),
+            self.process_datetime(self._opt_value(details, "受付開始日時")),
+            self.process_datetime(self._opt_value(details, "受付終了日時")),
             portfolio_type,
             result_view_type,
             status,
@@ -423,8 +428,8 @@ class Manaba:
 
             survey_status = self._parse_status(survey_td_tags[1].text.strip())
 
-            survey_start_time = self._process_datetime(survey_td_tags[2].text.strip())
-            survey_end_time = self._process_datetime(survey_td_tags[3].text.strip())
+            survey_start_time = self.process_datetime(survey_td_tags[2].text.strip())
+            survey_end_time = self.process_datetime(survey_td_tags[3].text.strip())
 
             surveys.append(ManabaSurvey(
                 survey_id,
@@ -471,8 +476,8 @@ class Manaba:
 
             report_status = self._parse_status(report_td_tags[1].text.strip())
 
-            report_start_time = self._process_datetime(report_td_tags[2].text.strip())
-            report_end_time = self._process_datetime(report_td_tags[3].text.strip())
+            report_start_time = self.process_datetime(report_td_tags[2].text.strip())
+            report_end_time = self.process_datetime(report_td_tags[3].text.strip())
 
             reports.append(ManabaReport(
                 report_id,
@@ -486,7 +491,16 @@ class Manaba:
         return reports
 
     @staticmethod
-    def _process_datetime(datetime_str: Optional[str]) -> Optional[datetime.datetime]:
+    def process_datetime(datetime_str: Optional[str]) -> Optional[datetime.datetime]:
+        """
+        manabaの日時テキスト(YYYY-MM-DD HH:MM:SS)からdatetime.datetimeに変換する
+
+        Args:
+            datetime_str:
+
+        Returns:
+
+        """
         if datetime_str is None or datetime_str == "":
             return None
         datetime_format = "%Y-%m-%d %H:%M:%S %z" if len(datetime_str) == 19 else "%Y-%m-%d %H:%M %z"
@@ -497,7 +511,7 @@ class Manaba:
                    key: str) -> Optional[str]:
         if key not in items or items[key] is None:
             return None
-        return items[key]
+        return items[key].strip()
 
     @staticmethod
     def _parse_status(status_text: str) -> ManabaTaskStatus:

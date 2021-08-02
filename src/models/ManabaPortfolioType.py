@@ -21,6 +21,25 @@ class ManabaPortfolioType(Enum):
         self.showing_name = showing_name
 
 
+def get_portfolio_type_from_name(name: Optional[str]) -> Optional[ManabaPortfolioType]:
+    """
+    メンバー名称を指定して列挙メンバーを取得します
+
+    Args:
+        name: メンバー名称
+
+    Returns:
+        ManabaPortfolioType: 該当する列挙メンバー、ないか、入力値が None なら None
+    """
+    if name is None:
+        return None
+
+    for e in ManabaPortfolioType:
+        if e.name == name:
+            return e
+    return None
+
+
 def get_portfolio_type(showing_name: Optional[str]) -> Optional[ManabaPortfolioType]:
     """
     表示名を指定して列挙メンバーを取得します (合致、もしくは包含)

@@ -106,10 +106,10 @@ class ManabaQueryDetails:
     @property
     def portfolio_type(self) -> Optional[ManabaPortfolioType]:
         """
-        ポートフォリオ
+        ポートフォリオ種別
 
         Returns:
-            ManabaPortfolioType: ポートフォリオ
+            ManabaPortfolioType: ポートフォリオ種別
         """
         return self._portfolio_type
 

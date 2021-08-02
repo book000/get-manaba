@@ -28,8 +28,8 @@ class ManabaQuery:
             title: 小テストタイトル
             status: ステータス
             status_lamp: ステータスランプ
-            reception_start_time: 開始日時
-            reception_end_time: 終了日時
+            reception_start_time: 受付開始日時
+            reception_end_time: 受付終了日時
         """
         self._query_id = query_id
         self._title = title
@@ -84,7 +84,7 @@ class ManabaQuery:
         開始日時
 
         Returns:
-            Optional[datetime.datetime]: 開始日時
+            Optional[datetime.datetime]: 受付開始日時
         """
         return self._reception_start_time
 
@@ -94,6 +94,6 @@ class ManabaQuery:
         終了日時
 
         Returns:
-            Optional[datetime.datetime]: 終了日時
+            Optional[datetime.datetime]: 受付終了日時
         """
         return self._reception_end_time

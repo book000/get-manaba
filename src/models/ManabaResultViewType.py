@@ -25,6 +25,25 @@ class ManabaResultViewType(Enum):
         self.showing_name = showing_name
 
 
+def get_result_view_type_from_name(name: Optional[str]) -> Optional[ManabaResultViewType]:
+    """
+    メンバー名称を指定して列挙メンバーを取得します
+
+    Args:
+        name: メンバー名称
+
+    Returns:
+        Optional[ManabaResultViewType]: 該当する列挙メンバー、ないか、入力値が None なら None
+    """
+    if name is None:
+        return None
+
+    for e in ManabaResultViewType:
+        if e.name == name:
+            return e
+    return None
+
+
 def get_result_view_type(showing_name: Optional[str]) -> Optional[ManabaResultViewType]:
     """
     表示名を指定して列挙メンバーを取得します (合致、もしくは包含)
