@@ -250,6 +250,46 @@ class TestManaba(TestCase):
             self.assertIn(report_id, report_ids, "テストデータのレポートIDに合致するタイトルが見つかりません。")
             self.assertIn(report_title, report_names, "テストデータのレポートタイトルに合致するタイトルが見つかりません。")
 
+    def test_get_report(self) -> None:
+        if "tests" not in self.config:
+            self.fail("コンフィグにテストデータがないため、失敗しました。")
+        if "test_get_report" not in self.config["tests"]:
+            self.fail("コンフィグにこのテスト用のテストデータがないため、失敗しました。")
+
+        self.assertRaises(src.ManabaNotFound, self.manaba.get_report,
+                          self.config["tests"]["test_get_report"][0]["course_id"], 0)
+
+        for test in self.config["tests"]["test_get_report"]:
+            course_id: int = test["course_id"]
+            report_id: int = test["report_id"]
+            report_title = test["report_title"]
+            print("survey_title:" + report_title, "course_id:" + str(course_id), "report_id:" + str(report_id))
+
+            description = test["description"]
+            reception_start_time = Manaba.process_datetime(test["reception_start_time"])
+            self.assertNotEqual(None, reception_start_time, "テストデータとして渡された reception_start_time が正しくありません。")
+            reception_end_time = Manaba.process_datetime(test["reception_end_time"])
+            self.assertNotEqual(None, reception_end_time, "テストデータとして渡された reception_end_time が正しくありません。")
+            portfolio_type = get_portfolio_type_from_name(test["portfolio_type"])
+            student_resubmit_type = get_student_resubmit_type_from_name(test["student_resubmit_type"])
+            self.assertNotEqual(None, student_resubmit_type, "テストデータとして渡された student_resubmit_type が正しくありません。")
+            task_status = get_task_status_from_name(test["status"]["task_status"])
+            self.assertNotEqual(None, task_status, "テストデータとして渡された task_status が正しくありません。")
+            your_status = get_your_status_from_name(test["status"]["your_status"])
+            self.assertNotEqual(None, your_status, "テストデータとして渡された task_status が正しくありません。")
+
+            report = self.manaba.get_report(course_id, report_id)
+            self.assertEqual(report_title, report.title, "課題タイトルが一致しません。")
+            self.assertEqual(description, report.description, "課題説明が一致しません。")
+            self.assertEqual(reception_start_time, report.reception_start_time, "受付開始時刻が一致しません。")
+            self.assertEqual(reception_end_time, report.reception_end_time, "受付終了時刻が一致しません。")
+            self.assertEqual(portfolio_type, report.portfolio_type, "ポートフォリオ種別が一致しません。")
+            self.assertEqual(student_resubmit_type, report.student_resubmit_type, "学生による再提出の許可が一致しません。")
+            self.assertNotEqual(None, report.status, "課題の状態を取得できませんでした。")
+            assert report.status is not None
+            self.assertEqual(task_status, report.status.task_status, "課題の状態が一致しません。")
+            self.assertEqual(your_status, report.status.your_status, "課題の提出状態が一致しません。")
+
 
 class TestManabaNotLoggedIn(TestCase):
     def setUp(self) -> None:

@@ -20,6 +20,7 @@ from src.models.ManabaPortfolioType import get_portfolio_type
 from src.models.ManabaQuery import ManabaQuery
 from src.models.ManabaQueryDetails import ManabaQueryDetails
 from src.models.ManabaReport import ManabaReport
+from src.models.ManabaReportDetails import ManabaReportDetails
 from src.models.ManabaResultViewType import get_result_view_type
 from src.models.ManabaStudentReSubmitType import get_student_resubmit_type
 from src.models.ManabaSurvey import ManabaSurvey
@@ -449,8 +450,8 @@ class Manaba:
         指定したコース・アンケート ID のアンケート詳細情報を取得します。
 
         Args:
-            course_id: 取得する小テストのコース ID
-            survey_id:取得する小テストのアンケート ID
+            course_id: 取得するアンケートのコース ID
+            survey_id:取得するアンケートのアンケート ID
 
         Returns:
             ManabaSurveyDetails: アンケート詳細情報
@@ -553,6 +554,79 @@ class Manaba:
 
         return reports
 
+    def get_report(self,
+                   course_id: int,
+                   report_id: int) -> ManabaReportDetails:
+        """
+        指定したコース・レポート ID のレポート詳細情報を取得します。
+
+        Args:
+            course_id: 取得するレポートのコース ID
+            report_id: 取得するレポートのアンケート ID
+
+        Returns:
+            ManabaReportDetails: レポート詳細情報
+        """
+
+        if not self.__logged_in:
+            raise ManabaNotLoggedIn()
+
+        response = self.session.get(
+            urljoin(self.__base_url, "/ct/course_" + str(course_id)) + "_report_" + str(report_id))
+        if response.status_code == 404 or response.status_code == 403:
+            raise ManabaNotFound()
+        response.raise_for_status()
+        soup = BeautifulSoup(response.text, "html5lib")
+
+        if soup.find("table", {"class": "stdlist-report"}) is None:
+            raise ManabaNotFound()
+
+        report_title = soup.find("tr", {"class": "title"}).text.strip()
+
+        details = {}
+        detail_trs = soup.find("table", {"class": "stdlist-report"}).find_all("tr")
+        for tr in detail_trs:
+            if tr.get("class") == "title":
+                continue
+
+            th = tr.find("th")
+            td = tr.find("td")
+            if th is None or td is None:
+                continue
+            for tag in td.find_all("br"):
+                tag.replace_with("\n")
+
+            details[th.text.strip()] = td.text.strip()
+
+        portfolio_and_view_settings = self._opt_value(details, "ポートフォリオ / 閲覧設定")
+        portfolio_type = None
+        result_view_type = None
+        if portfolio_and_view_settings is not None and " / " in portfolio_and_view_settings:
+            portfolio_type = get_portfolio_type(portfolio_and_view_settings.split(" / ")[0])
+            result_view_type = get_result_view_type(portfolio_and_view_settings.split(" / ")[1])
+
+        student_resubmit_type = get_student_resubmit_type(self._opt_value(details, "学生による再提出の許可"))
+
+        status_value = self._opt_value(details, "状態")
+        status = None
+        if status_value is not None:
+            if soup.find("table", {"class": "stdlist-report"}).find("span", {"class": "expired"}) is not None:
+                status = ManabaTaskStatus(ManabaTaskStatusFlag.CLOSED, ManabaTaskYourStatusFlag.UNSUBMITTED)
+            else:
+                status = self._parse_status(status_value)
+
+        return ManabaReportDetails(
+            report_id,
+            report_title,
+            self._opt_value(details, "課題に関する説明"),
+            self.process_datetime(self._opt_value(details, "受付開始日時")),
+            self.process_datetime(self._opt_value(details, "受付終了日時")),
+            portfolio_type,
+            result_view_type,
+            student_resubmit_type,
+            status
+        )
+
     @staticmethod
     def process_datetime(datetime_str: Optional[str]) -> Optional[datetime.datetime]:
         """
@@ -578,28 +652,57 @@ class Manaba:
 
     @staticmethod
     def _parse_status(status_text: str) -> ManabaTaskStatus:
-        if len(status_text.split("\n")) == 1:
+        statuses = status_text.split("\n")
+        statuses = list(map(lambda x: x.strip(), statuses))
+        statuses = list(filter(lambda x: len(x) != 0, statuses))
+        if len(statuses) == 1:
             # 受付開始待ちなど1行しか状態がない
-            task_status = get_task_status(status_text.split("\n")[0].strip())
+            task_status = get_task_status(statuses[0].strip())
             if task_status is None:
                 raise ManabaInternalError(
-                    "get_task_status return None (" + status_text.split("\n")[0].strip() + ")")
+                    "get_task_status return None (" + statuses[0].strip() + ")")
             return ManabaTaskStatus(task_status, None)
 
-        if len(status_text.split("\n")) == 2:
-            task_status = get_task_status(status_text.split("\n")[0].strip())
+        if len(statuses) == 2:
+            task_status = get_task_status(statuses[0].strip())
             if task_status is None:
                 raise ManabaInternalError(
-                    "get_task_status return None (" + status_text.split("\n")[0].strip() + ")")
+                    "get_task_status return None (" + statuses[0].strip() + ")")
 
-            your_status = get_your_status(status_text.split("\n")[1].strip())
+            your_status = get_your_status(statuses[1].strip())
             if your_status is None:
                 raise ManabaInternalError(
-                    "your_status return None (" + status_text.split("\n")[1].strip() + ")")
+                    "your_status return None (" + statuses[1].strip() + ")")
 
             return ManabaTaskStatus(task_status, your_status)
 
-        raise ManabaInternalError("td_tags length not matched (" + str(len(status_text.split("\n"))) + ")")
+        if len(statuses) == 3:
+            task_status = get_task_status(statuses[0].strip())
+            if task_status is None:
+                raise ManabaInternalError(
+                    "get_task_status return None (" + statuses[0].strip() + ")")
+
+            your_status = get_your_status(statuses[1].strip())
+            if your_status is None:
+                raise ManabaInternalError(
+                    "your_status return None (" + statuses[1].strip() + ")")
+
+            return ManabaTaskStatus(task_status, your_status)
+
+        if len(statuses) == 4:
+            task_status = get_task_status(statuses[0].strip())
+            if task_status is None:
+                raise ManabaInternalError(
+                    "get_task_status return None (" + statuses[0].strip() + ")")
+
+            your_status = get_your_status(statuses[2].strip())
+            if your_status is None:
+                raise ManabaInternalError(
+                    "your_status return None (" + statuses[2].strip() + ")")
+
+            return ManabaTaskStatus(task_status, your_status)
+
+        raise ManabaInternalError("td_tags length not matched (" + str(len(statuses)) + ")")
 
     @staticmethod
     def _parse_grade_bar(gradelist: bs4.element.Tag) -> Optional[ManabaGradePosition]:
