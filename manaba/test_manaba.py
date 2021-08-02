@@ -1,13 +1,13 @@
 import json
 from unittest import TestCase
 
-import src
-from src import Manaba
-from src.models.ManabaPortfolioType import get_portfolio_type_from_name
-from src.models.ManabaResultViewType import get_result_view_type_from_name
-from src.models.ManabaStudentReSubmitType import get_student_resubmit_type_from_name
-from src.models.ManabaTaskStatusFlag import get_task_status_from_name
-from src.models.ManabaTaskYourStatusFlag import get_your_status_from_name
+import manaba
+from manaba import Manaba
+from manaba.models.ManabaPortfolioType import get_portfolio_type_from_name
+from manaba.models.ManabaResultViewType import get_result_view_type_from_name
+from manaba.models.ManabaStudentReSubmitType import get_student_resubmit_type_from_name
+from manaba.models.ManabaTaskStatusFlag import get_task_status_from_name
+from manaba.models.ManabaTaskYourStatusFlag import get_your_status_from_name
 
 
 class TestManaba(TestCase):
@@ -92,7 +92,7 @@ class TestManaba(TestCase):
         if "test_get_course" not in self.config["tests"]:
             self.fail("コンフィグにこのテスト用のテストデータがないため、失敗しました。")
 
-        self.assertRaises(src.ManabaNotFound, self.manaba.get_course, 0)
+        self.assertRaises(manaba.ManabaNotFound, self.manaba.get_course, 0)
 
         for test in self.config["tests"]["test_get_course"]:
             course_id: int = test["course_id"]
@@ -108,7 +108,7 @@ class TestManaba(TestCase):
         if "test_get_querys" not in self.config["tests"]:
             self.fail("コンフィグにこのテスト用のテストデータがないため、失敗しました。")
 
-        self.assertRaises(src.ManabaNotFound, self.manaba.get_querys, 0)
+        self.assertRaises(manaba.ManabaNotFound, self.manaba.get_querys, 0)
 
         for test in self.config["tests"]["test_get_querys"]:
             course_id: int = test["course_id"]
@@ -128,7 +128,7 @@ class TestManaba(TestCase):
         if "test_get_query" not in self.config["tests"]:
             self.fail("コンフィグにこのテスト用のテストデータがないため、失敗しました。")
 
-        self.assertRaises(src.ManabaNotFound, self.manaba.get_query,
+        self.assertRaises(manaba.ManabaNotFound, self.manaba.get_query,
                           self.config["tests"]["test_get_query"][0]["course_id"], 0)
 
         for test in self.config["tests"]["test_get_query"]:
@@ -177,7 +177,7 @@ class TestManaba(TestCase):
         if "test_get_surveys" not in self.config["tests"]:
             self.fail("コンフィグにこのテスト用のテストデータがないため、失敗しました。")
 
-        self.assertRaises(src.ManabaNotFound, self.manaba.get_surveys, 0)
+        self.assertRaises(manaba.ManabaNotFound, self.manaba.get_surveys, 0)
 
         for test in self.config["tests"]["test_get_surveys"]:
             course_id: int = test["course_id"]
@@ -198,7 +198,7 @@ class TestManaba(TestCase):
         if "test_get_survey" not in self.config["tests"]:
             self.fail("コンフィグにこのテスト用のテストデータがないため、失敗しました。")
 
-        self.assertRaises(src.ManabaNotFound, self.manaba.get_query,
+        self.assertRaises(manaba.ManabaNotFound, self.manaba.get_query,
                           self.config["tests"]["test_get_survey"][0]["course_id"], 0)
 
         for test in self.config["tests"]["test_get_survey"]:
@@ -236,7 +236,7 @@ class TestManaba(TestCase):
         if "test_get_reports" not in self.config["tests"]:
             self.fail("コンフィグにこのテスト用のテストデータがないため、失敗しました。")
 
-        self.assertRaises(src.ManabaNotFound, self.manaba.get_reports, 0)
+        self.assertRaises(manaba.ManabaNotFound, self.manaba.get_reports, 0)
 
         for test in self.config["tests"]["test_get_reports"]:
             course_id: int = test["course_id"]
@@ -256,7 +256,7 @@ class TestManaba(TestCase):
         if "test_get_report" not in self.config["tests"]:
             self.fail("コンフィグにこのテスト用のテストデータがないため、失敗しました。")
 
-        self.assertRaises(src.ManabaNotFound, self.manaba.get_report,
+        self.assertRaises(manaba.ManabaNotFound, self.manaba.get_report,
                           self.config["tests"]["test_get_report"][0]["course_id"], 0)
 
         for test in self.config["tests"]["test_get_report"]:
@@ -303,7 +303,7 @@ class TestManabaNotLoggedIn(TestCase):
         self.manaba = Manaba(base_url)
 
     def test_get_courses(self) -> None:
-        self.assertRaises(src.ManabaNotLoggedIn, self.manaba.get_courses)
+        self.assertRaises(manaba.ManabaNotLoggedIn, self.manaba.get_courses)
 
     def test_get_course(self) -> None:
         if "tests" not in self.config:
@@ -315,4 +315,4 @@ class TestManabaNotLoggedIn(TestCase):
             course_id: int = test["course_id"]
             print("course_id:" + str(course_id))
 
-            self.assertRaises(src.ManabaNotLoggedIn, self.manaba.get_course, course_id)
+            self.assertRaises(manaba.ManabaNotLoggedIn, self.manaba.get_course, course_id)

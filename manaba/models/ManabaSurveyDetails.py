@@ -4,9 +4,9 @@ manaba アンケート詳細
 import datetime
 from typing import Optional
 
-from src.models.ManabaPortfolioType import ManabaPortfolioType
-from src.models.ManabaStudentReSubmitType import ManabaStudentReSubmitType
-from src.models.ManabaTaskStatus import ManabaTaskStatus
+from manaba.models.ManabaPortfolioType import ManabaPortfolioType
+from manaba.models.ManabaStudentReSubmitType import ManabaStudentReSubmitType
+from manaba.models.ManabaTaskStatus import ManabaTaskStatus
 
 
 class ManabaSurveyDetails:

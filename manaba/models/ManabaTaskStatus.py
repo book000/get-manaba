@@ -4,8 +4,8 @@
 
 from typing import Optional
 
-from src.models.ManabaTaskStatusFlag import ManabaTaskStatusFlag
-from src.models.ManabaTaskYourStatusFlag import ManabaTaskYourStatusFlag
+from manaba.models.ManabaTaskStatusFlag import ManabaTaskStatusFlag
+from manaba.models.ManabaTaskYourStatusFlag import ManabaTaskYourStatusFlag
 
 
 class ManabaTaskStatus:

@@ -5,33 +5,33 @@ manaba 小テスト
 import datetime
 from typing import Optional
 
-from src.models.ManabaTaskStatus import ManabaTaskStatus
+from manaba.models.ManabaTaskStatus import ManabaTaskStatus
 
 
-class ManabaSurvey:
+class ManabaReport:
     """
-    manaba アンケート
+    manaba レポート
     """
 
     def __init__(self,
-                 survey_id: int,
+                 report_id: int,
                  title: str,
                  status: ManabaTaskStatus,
                  status_lamp: bool,
                  reception_start_time: Optional[datetime.datetime],
                  reception_end_time: Optional[datetime.datetime]):
         """
-        manaba アンケート
+        manaba レポート
 
         Args:
-            survey_id: アンケート ID
-            title: アンケートタイトル
+            report_id: レポート ID
+            title: レポートタイトル
             status: ステータス
             status_lamp: ステータスランプ
             reception_start_time: 開始日時
             reception_end_time: 終了日時
         """
-        self._survey_id = survey_id
+        self._report_id = report_id
         self._title = title
         self._status = status
         self._status_lamp = status_lamp
@@ -39,14 +39,14 @@ class ManabaSurvey:
         self._reception_end_time = reception_end_time
 
     @property
-    def survey_id(self) -> int:
+    def report_id(self) -> int:
         """
         アンケート ID
 
         Returns:
             int: ID
         """
-        return self._survey_id
+        return self._report_id
 
     @property
     def title(self) -> str:

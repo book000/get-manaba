@@ -5,10 +5,10 @@ manaba 小テスト詳細
 import datetime
 from typing import Optional, Union
 
-from src.models.ManabaGradePosition import ManabaGradePosition
-from src.models.ManabaPortfolioType import ManabaPortfolioType
-from src.models.ManabaResultViewType import ManabaResultViewType
-from src.models.ManabaTaskStatus import ManabaTaskStatus
+from manaba.models.ManabaGradePosition import ManabaGradePosition
+from manaba.models.ManabaPortfolioType import ManabaPortfolioType
+from manaba.models.ManabaResultViewType import ManabaResultViewType
+from manaba.models.ManabaTaskStatus import ManabaTaskStatus
 
 
 class ManabaQueryDetails:

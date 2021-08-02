@@ -4,7 +4,7 @@ manaba コース情報
 
 from typing import Optional
 
-from src.models.ManabaCourseLamps import ManabaCourseLamps
+from manaba.models.ManabaCourseLamps import ManabaCourseLamps
 
 
 class ManabaCourse:

@@ -13,21 +13,21 @@ import bs4.element
 import requests
 from bs4 import BeautifulSoup
 
-from src.models.ManabaCourse import ManabaCourse
-from src.models.ManabaCourseLamps import ManabaCourseLamps
-from src.models.ManabaGradePosition import ManabaGradePosition
-from src.models.ManabaPortfolioType import get_portfolio_type
-from src.models.ManabaQuery import ManabaQuery
-from src.models.ManabaQueryDetails import ManabaQueryDetails
-from src.models.ManabaReport import ManabaReport
-from src.models.ManabaReportDetails import ManabaReportDetails
-from src.models.ManabaResultViewType import get_result_view_type
-from src.models.ManabaStudentReSubmitType import get_student_resubmit_type
-from src.models.ManabaSurvey import ManabaSurvey
-from src.models.ManabaSurveyDetails import ManabaSurveyDetails
-from src.models.ManabaTaskStatus import ManabaTaskStatus
-from src.models.ManabaTaskStatusFlag import ManabaTaskStatusFlag, get_task_status
-from src.models.ManabaTaskYourStatusFlag import ManabaTaskYourStatusFlag, get_your_status
+from manaba.models.ManabaCourse import ManabaCourse
+from manaba.models.ManabaCourseLamps import ManabaCourseLamps
+from manaba.models.ManabaGradePosition import ManabaGradePosition
+from manaba.models.ManabaPortfolioType import get_portfolio_type
+from manaba.models.ManabaQuery import ManabaQuery
+from manaba.models.ManabaQueryDetails import ManabaQueryDetails
+from manaba.models.ManabaReport import ManabaReport
+from manaba.models.ManabaReportDetails import ManabaReportDetails
+from manaba.models.ManabaResultViewType import get_result_view_type
+from manaba.models.ManabaStudentReSubmitType import get_student_resubmit_type
+from manaba.models.ManabaSurvey import ManabaSurvey
+from manaba.models.ManabaSurveyDetails import ManabaSurveyDetails
+from manaba.models.ManabaTaskStatus import ManabaTaskStatus
+from manaba.models.ManabaTaskStatusFlag import ManabaTaskStatusFlag, get_task_status
+from manaba.models.ManabaTaskYourStatusFlag import ManabaTaskYourStatusFlag, get_your_status
 
 JST = datetime.timezone(datetime.timedelta(hours=+9), 'JST')
 
