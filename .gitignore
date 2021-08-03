@@ -1,5 +1,7 @@
 venv
 .idea
 config.json
+tests.json
 *.pyc
 test.py
+get_manaba.egg-info

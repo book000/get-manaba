@@ -17,6 +17,7 @@ class ManabaQueryDetails:
     """
 
     def __init__(self,
+                 course_id: int,
                  query_id: int,
                  title: str,
                  description: Optional[str],
@@ -31,6 +32,7 @@ class ManabaQueryDetails:
         manaba 小テスト詳細
 
         Args:
+            course_id: コース ID
             query_id: 小テスト ID
             title: タイトル
             description: 課題に関する説明
@@ -42,6 +44,7 @@ class ManabaQueryDetails:
             grade: 成績
             position: 成績ポジション
         """
+        self._course_id = course_id
         self._query_id = query_id
         self._title = title
         self._description = description
@@ -52,6 +55,18 @@ class ManabaQueryDetails:
         self._status = status
         self._grade = grade
         self._position = position
+
+    @property
+    def course_id(self) -> int:
+        """
+        コース ID (URLの一部)
+        ※コースコードではない
+
+        Returns:
+            int: コース ID
+
+        """
+        return self._course_id
 
     @property
     def query_id(self) -> int:

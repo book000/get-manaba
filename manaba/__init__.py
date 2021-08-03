@@ -307,6 +307,7 @@ class Manaba:
             query_end_time = self.process_datetime(query_td_tags[3].text.strip())
 
             querys.append(ManabaQuery(
+                course_id,
                 query_id,
                 query_title,
                 query_status,
@@ -383,6 +384,7 @@ class Manaba:
             position = self._parse_grade_bar(gradelist)
 
         return ManabaQueryDetails(
+            course_id,
             query_id,
             query_title,
             self._opt_value(details, "課題に関する説明"),
@@ -433,6 +435,7 @@ class Manaba:
             survey_end_time = self.process_datetime(survey_td_tags[3].text.strip())
 
             surveys.append(ManabaSurvey(
+                course_id,
                 survey_id,
                 survey_title,
                 survey_status,
@@ -497,6 +500,7 @@ class Manaba:
                 status = self._parse_status(status_value)
 
         return ManabaSurveyDetails(
+            course_id,
             survey_id,
             survey_title,
             self.process_datetime(self._opt_value(details, "受付開始日時")),
@@ -544,6 +548,7 @@ class Manaba:
             report_end_time = self.process_datetime(report_td_tags[3].text.strip())
 
             reports.append(ManabaReport(
+                course_id,
                 report_id,
                 report_title,
                 report_status,
@@ -616,6 +621,7 @@ class Manaba:
                 status = self._parse_status(status_value)
 
         return ManabaReportDetails(
+            course_id,
             report_id,
             report_title,
             self._opt_value(details, "課題に関する説明"),

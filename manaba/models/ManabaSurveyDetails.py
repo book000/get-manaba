@@ -15,6 +15,7 @@ class ManabaSurveyDetails:
     """
 
     def __init__(self,
+                 course_id: int,
                  survey_id: int,
                  title: str,
                  reception_start_time: Optional[datetime.datetime],
@@ -26,6 +27,7 @@ class ManabaSurveyDetails:
         manaba アンケート詳細
 
         Args:
+            course_id: コース ID
             survey_id: 小テスト ID
             title: タイトル
             reception_start_time: 受付開始日時
@@ -34,6 +36,7 @@ class ManabaSurveyDetails:
             student_resubmit_type: 学生による再提出の許可
             status: 状態
         """
+        self._course_id = course_id
         self._survey_id = survey_id
         self._title = title
         self._reception_start_time = reception_start_time
@@ -41,6 +44,18 @@ class ManabaSurveyDetails:
         self._portfolio_type = portfolio_type
         self._student_resubmit_type = student_resubmit_type
         self._status = status
+
+    @property
+    def course_id(self) -> int:
+        """
+        コース ID (URLの一部)
+        ※コースコードではない
+
+        Returns:
+            int: コース ID
+
+        """
+        return self._course_id
 
     @property
     def survey_id(self) -> int:

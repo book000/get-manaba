@@ -1,4 +1,5 @@
 import json
+import os
 from unittest import TestCase
 
 import manaba
@@ -17,6 +18,12 @@ class TestManaba(TestCase):
         """
         with open("config.json", encoding="utf-8") as f:
             self.config = json.load(f)
+
+        if os.path.exists("tests.json"):
+            with open("tests.json", encoding="utf-8") as f:
+                self.tests = json.load(f)
+        elif "tests" in self.config:
+            self.tests = self.config["tests"]
 
         self.base_url = self.config["base_url"]
         self.manaba = Manaba(self.base_url)
@@ -87,14 +94,12 @@ class TestManaba(TestCase):
                                   str(self.courses_count["timetable"])))
 
     def test_get_course(self) -> None:
-        if "tests" not in self.config:
-            self.fail("コンフィグにテストデータがないため、失敗しました。")
-        if "test_get_course" not in self.config["tests"]:
+        if "test_get_course" not in self.tests:
             self.fail("コンフィグにこのテスト用のテストデータがないため、失敗しました。")
 
         self.assertRaises(manaba.ManabaNotFound, self.manaba.get_course, 0)
 
-        for test in self.config["tests"]["test_get_course"]:
+        for test in self.tests["test_get_course"]:
             course_id: int = test["course_id"]
             course_name = test["course_name"]
             print("course_name:" + course_name, "course_id:" + str(course_id))
@@ -103,14 +108,12 @@ class TestManaba(TestCase):
             self.assertEqual(course.name, course_name, "テストデータに登録されているコース名と異なります。")
 
     def test_get_querys(self) -> None:
-        if "tests" not in self.config:
-            self.fail("コンフィグにテストデータがないため、失敗しました。")
-        if "test_get_querys" not in self.config["tests"]:
+        if "test_get_querys" not in self.tests:
             self.fail("コンフィグにこのテスト用のテストデータがないため、失敗しました。")
 
         self.assertRaises(manaba.ManabaNotFound, self.manaba.get_querys, 0)
 
-        for test in self.config["tests"]["test_get_querys"]:
+        for test in self.tests["test_get_querys"]:
             course_id: int = test["course_id"]
             query_id: int = test["query_id"]
             query_title = test["query_title"]
@@ -123,15 +126,13 @@ class TestManaba(TestCase):
             self.assertIn(query_title, query_names, "テストデータの小テストタイトルに合致するタイトルが見つかりません。")
 
     def test_get_query(self) -> None:
-        if "tests" not in self.config:
-            self.fail("コンフィグにテストデータがないため、失敗しました。")
-        if "test_get_query" not in self.config["tests"]:
+        if "test_get_query" not in self.tests:
             self.fail("コンフィグにこのテスト用のテストデータがないため、失敗しました。")
 
         self.assertRaises(manaba.ManabaNotFound, self.manaba.get_query,
-                          self.config["tests"]["test_get_query"][0]["course_id"], 0)
+                          self.tests["test_get_query"][0]["course_id"], 0)
 
-        for test in self.config["tests"]["test_get_query"]:
+        for test in self.tests["test_get_query"]:
             course_id: int = test["course_id"]
             query_id: int = test["query_id"]
             query_title = test["query_title"]
@@ -172,14 +173,12 @@ class TestManaba(TestCase):
             self.assertEqual(above_percent, query.position.above_percent, "成績ポジションにおける自身より上の点数の割合が一致しません。")
 
     def test_get_surveys(self) -> None:
-        if "tests" not in self.config:
-            self.fail("コンフィグにテストデータがないため、失敗しました。")
-        if "test_get_surveys" not in self.config["tests"]:
+        if "test_get_surveys" not in self.tests:
             self.fail("コンフィグにこのテスト用のテストデータがないため、失敗しました。")
 
         self.assertRaises(manaba.ManabaNotFound, self.manaba.get_surveys, 0)
 
-        for test in self.config["tests"]["test_get_surveys"]:
+        for test in self.tests["test_get_surveys"]:
             course_id: int = test["course_id"]
             survey_id: int = test["survey_id"]
             survey_title = test["survey_title"]
@@ -193,15 +192,13 @@ class TestManaba(TestCase):
             self.assertIn(survey_title, survey_names, "テストデータのアンケートタイトルに合致するタイトルが見つかりません。")
 
     def test_get_survey(self) -> None:
-        if "tests" not in self.config:
-            self.fail("コンフィグにテストデータがないため、失敗しました。")
-        if "test_get_survey" not in self.config["tests"]:
+        if "test_get_survey" not in self.tests:
             self.fail("コンフィグにこのテスト用のテストデータがないため、失敗しました。")
 
         self.assertRaises(manaba.ManabaNotFound, self.manaba.get_query,
-                          self.config["tests"]["test_get_survey"][0]["course_id"], 0)
+                          self.tests["test_get_survey"][0]["course_id"], 0)
 
-        for test in self.config["tests"]["test_get_survey"]:
+        for test in self.tests["test_get_survey"]:
             course_id: int = test["course_id"]
             survey_id: int = test["survey_id"]
             survey_title = test["survey_title"]
@@ -231,14 +228,12 @@ class TestManaba(TestCase):
             self.assertEqual(your_status, survey.status.your_status, "課題の提出状態が一致しません。")
 
     def test_get_reports(self) -> None:
-        if "tests" not in self.config:
-            self.fail("コンフィグにテストデータがないため、失敗しました。")
-        if "test_get_reports" not in self.config["tests"]:
+        if "test_get_reports" not in self.tests:
             self.fail("コンフィグにこのテスト用のテストデータがないため、失敗しました。")
 
         self.assertRaises(manaba.ManabaNotFound, self.manaba.get_reports, 0)
 
-        for test in self.config["tests"]["test_get_reports"]:
+        for test in self.tests["test_get_reports"]:
             course_id: int = test["course_id"]
             report_id: int = test["report_id"]
             report_title = test["report_title"]
@@ -251,15 +246,13 @@ class TestManaba(TestCase):
             self.assertIn(report_title, report_names, "テストデータのレポートタイトルに合致するタイトルが見つかりません。")
 
     def test_get_report(self) -> None:
-        if "tests" not in self.config:
-            self.fail("コンフィグにテストデータがないため、失敗しました。")
-        if "test_get_report" not in self.config["tests"]:
+        if "test_get_report" not in self.tests:
             self.fail("コンフィグにこのテスト用のテストデータがないため、失敗しました。")
 
         self.assertRaises(manaba.ManabaNotFound, self.manaba.get_report,
-                          self.config["tests"]["test_get_report"][0]["course_id"], 0)
+                          self.tests["test_get_report"][0]["course_id"], 0)
 
-        for test in self.config["tests"]["test_get_report"]:
+        for test in self.tests["test_get_report"]:
             course_id: int = test["course_id"]
             report_id: int = test["report_id"]
             report_title = test["report_title"]
@@ -299,6 +292,12 @@ class TestManabaNotLoggedIn(TestCase):
         with open("config.json", encoding="utf-8") as f:
             self.config = json.load(f)
 
+        if os.path.exists("tests.json"):
+            with open("tests.json", encoding="utf-8") as f:
+                self.tests = json.load(f)
+        elif "tests" in self.config:
+            self.tests = self.config["tests"]
+
         base_url = self.config["base_url"]
         self.manaba = Manaba(base_url)
 
@@ -306,12 +305,10 @@ class TestManabaNotLoggedIn(TestCase):
         self.assertRaises(manaba.ManabaNotLoggedIn, self.manaba.get_courses)
 
     def test_get_course(self) -> None:
-        if "tests" not in self.config:
-            self.fail("コンフィグにテストデータがないため、失敗しました。")
-        if "test_get_course" not in self.config["tests"]:
+        if "test_get_course" not in self.tests:
             self.fail("コンフィグにこのテスト用のテストデータがないため、失敗しました。")
 
-        for test in self.config["tests"]["test_get_course"]:
+        for test in self.tests["test_get_course"]:
             course_id: int = test["course_id"]
             print("course_id:" + str(course_id))
 

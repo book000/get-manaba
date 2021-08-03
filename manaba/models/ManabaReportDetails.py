@@ -16,6 +16,7 @@ class ManabaReportDetails:
     """
 
     def __init__(self,
+                 course_id: int,
                  survey_id: int,
                  title: str,
                  description: Optional[str],
@@ -29,6 +30,7 @@ class ManabaReportDetails:
         manaba レポート詳細
 
         Args:
+            course_id: コース ID
             survey_id: 小テスト ID
             title: タイトル
             description: 課題に関する説明
@@ -39,6 +41,7 @@ class ManabaReportDetails:
             student_resubmit_type: 学生による再提出の許可
             status: 状態
         """
+        self._course_id = course_id
         self._survey_id = survey_id
         self._title = title
         self._description = description
@@ -48,6 +51,18 @@ class ManabaReportDetails:
         self._result_view_type = result_view_type
         self._student_resubmit_type = student_resubmit_type
         self._status = status
+
+    @property
+    def course_id(self) -> int:
+        """
+        コース ID (URLの一部)
+        ※コースコードではない
+
+        Returns:
+            int: コース ID
+
+        """
+        return self._course_id
 
     @property
     def survey_id(self) -> int:
