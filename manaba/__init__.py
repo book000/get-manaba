@@ -157,7 +157,7 @@ class Manaba:
         course_card: bs4.element.Tag
         for course_card in course_cards:
             title_link = course_card.find("div", {"class": "course-card-title"}).find("a")
-            course_name = title_link.text
+            course_name = title_link.text.strip()
             course_link = title_link.get("href")
             course_id: int = int(re.sub(r"course_([0-9]+)", r"\1", course_link))
 
@@ -203,7 +203,7 @@ class Manaba:
         courses = []
         course_row: bs4.element.Tag
         for course_row in course_rows:
-            course_name = course_row.find("span", {"class": "courselist-title"}).text
+            course_name = course_row.find("span", {"class": "courselist-title"}).text.strip()
             course_link = course_row.find("span", {"class": "courselist-title"}).find("a").get("href")
             course_id: int = int(re.sub(r"course_([0-9]+)", r"\1", course_link))
 
@@ -235,7 +235,7 @@ class Manaba:
         courses = []
         course_row: bs4.element.Tag
         for course_card in course_cards:
-            course_name = course_card.find("a").text
+            course_name = course_card.find("a").text.strip()
             course_link = course_card.find("a").get("href")
             course_id: int = int(re.sub(r"course_([0-9]+)", r"\1", course_link))
 
@@ -675,10 +675,13 @@ class Manaba:
                 raise ManabaInternalError(
                     "get_task_status return None (" + statuses[0].strip() + ")")
 
-            your_status = get_your_status(statuses[1].strip())
-            if your_status is None:
-                raise ManabaInternalError(
-                    "your_status return None (" + statuses[1].strip() + ")")
+            if "まだ提出は可能です" not in statuses[1]:  # 未提出 & ※遅延として取り扱われますが、まだ提出は可能です。
+                your_status = get_your_status(statuses[1].strip())
+                if your_status is None:
+                    raise ManabaInternalError(
+                        "your_status return None (" + statuses[1].strip() + ")")
+            else:
+                your_status = ManabaTaskYourStatusFlag.UNSUBMITTED
 
             return ManabaTaskStatus(task_status, your_status)
 

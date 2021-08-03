@@ -11,12 +11,12 @@ class ManabaTaskYourStatusFlag(Enum):
     manaba タスク(小テスト・アンケート・レポート)の提出ステータスフラグ
     """
     WAITING = (auto(), None)
-    UNSUBMITTED = (auto(), "未提出")
+    UNSUBMITTED = (auto(), "未提出", "まだ提出していません")
     SUBMITTED = (auto(), "提出済み")
 
     def __init__(self,
                  _id: int,
-                 showing_name: str):
+                 *showing_name: str):
         self._id = _id
         self.showing_name = showing_name
 
@@ -51,8 +51,10 @@ def get_your_status(showing_name: str) -> Optional[ManabaTaskYourStatusFlag]:
         Optional[ManabaTaskYourStatusFlag]: 該当する列挙メンバー、なければ None
     """
     for item in ManabaTaskYourStatusFlag:
-        if item.showing_name == showing_name:
+        if showing_name in item.showing_name:
             return item
-        if item.showing_name is not None and showing_name.startswith(item.showing_name):
+
+        if item.showing_name is not None and \
+                len(list(filter(lambda x: x is not None and showing_name.startswith(x), item.showing_name))) >= 1:
             return item
     return None
