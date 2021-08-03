@@ -45,4 +45,4 @@ jobs:
     - name: Check with mypy
       run: |
         yes | mypy manaba --install-types || true
-        mypy src
+        mypy manaba
