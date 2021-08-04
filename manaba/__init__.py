@@ -15,6 +15,7 @@ from bs4 import BeautifulSoup
 
 from manaba.models.ManabaCourse import ManabaCourse
 from manaba.models.ManabaCourseLamps import ManabaCourseLamps
+from manaba.models.ManabaCourseNews import ManabaCourseNews
 from manaba.models.ManabaGradePosition import ManabaGradePosition
 from manaba.models.ManabaPortfolioType import get_portfolio_type
 from manaba.models.ManabaQuery import ManabaQuery
@@ -114,6 +115,9 @@ class Manaba:
 
         Returns:
             list[ManabaCourse]: 参加しているコース情報
+
+        Notes:
+            詳細情報は Manaba.get_course で取得できます。
         """
         if not self.__logged_in:
             raise ManabaNotLoggedIn()
@@ -281,6 +285,9 @@ class Manaba:
 
         Returns:
             list[ManabaQuery]: コースの小テスト一覧
+
+        Notes:
+            詳細情報は Manaba.get_query で取得できます。
         """
         if not self.__logged_in:
             raise ManabaNotLoggedIn()
@@ -409,6 +416,9 @@ class Manaba:
 
         Returns:
             list[ManabaSurvey]: コースのアンケート一覧
+
+        Notes:
+            詳細情報は Manaba.get_survey で取得できます。
         """
         if not self.__logged_in:
             raise ManabaNotLoggedIn()
@@ -522,6 +532,9 @@ class Manaba:
 
         Returns:
             list[ManabaReport]: コースのレポート一覧
+
+        Notes:
+            詳細情報は Manaba.get_report で取得できます。
         """
         if not self.__logged_in:
             raise ManabaNotLoggedIn()
@@ -644,6 +657,9 @@ class Manaba:
 
         Returns:
             list[ManabaThread]: コースのスレッド一覧
+
+        Notes:
+            詳細情報は Manaba.get_thread で取得できます。
         """
         if not self.__logged_in:
             raise ManabaNotLoggedIn()
@@ -760,6 +776,141 @@ class Manaba:
             comments
         )
 
+    def get_news_list(self,
+                      course_id: int,
+                      start_id: Optional[int] = None,
+                      page_len: int = 10000) -> list[ManabaCourseNews]:
+        """
+        指定したコースのコースニュース一覧を取得します。
+
+        Args:
+            course_id: 取得するコースのコース ID
+            start_id: 直近から何番目から取得するか (指定しない場合はすべて)
+            page_len: 1 ページで最大何件コメント取得するか (指定しない場合は 10000 件)
+
+        Returns:
+            list[ManabaCourseNews]: コースのニュース一覧
+
+        Notes:
+            一部の項目のプロパティは None になります。詳細情報は Manaba.get_news で取得できます。
+        """
+        if not self.__logged_in:
+            raise ManabaNotLoggedIn()
+
+        params = {
+            "pagelen": page_len
+        }
+        if start_id is not None:
+            params["start_id"] = start_id
+
+        response = self.session.get(
+            urljoin(self.__base_url, "/ct/course_" + str(course_id)) + "_news?" + urlencode(params))
+        if response.status_code == 404 or response.status_code == 403:
+            raise ManabaNotFound()
+        response.raise_for_status()
+        soup = BeautifulSoup(response.text, "html5lib")
+
+        std_list = soup.find("table", {"class": "stdlist"})
+        if std_list is None:
+            return []
+
+        news_tags = std_list.find_all("tr", class_=["row", "row0", "row1"])
+        news = []
+        for news_tag in news_tags:
+            tds = news_tag.find_all("td")
+            news_title_tag = tds[0]
+            news_title = news_title_tag.text.strip()
+            news_link = news_title_tag.find("a").get("href")
+            news_id: int = int(re.sub(r"course_[0-9]+_news_([0-9]+)", r"\1", news_link))
+            news_author = tds[1].text.strip()
+            news_posted_at = self.process_datetime(tds[2].text.strip())
+
+            news.append(ManabaCourseNews(
+                course_id,
+                news_id,
+                news_title,
+                news_author,
+                news_posted_at,
+                None,
+                None,
+                None,
+                None
+            ))
+
+        return news
+
+    def get_news(self,
+                 course_id: int,
+                 news_id: int) -> ManabaCourseNews:
+        """
+        指定したコース・ニュース ID のニュース詳細情報を取得します。
+
+        Args:
+            course_id: 取得するコースのコース ID
+            news_id: 取得するニュースのニュース ID
+        """
+        if not self.__logged_in:
+            raise ManabaNotLoggedIn()
+
+        print(urljoin(self.__base_url, "/ct/course_" + str(course_id)) + "_news_" + str(news_id))
+        response = self.session.get(
+            urljoin(self.__base_url, "/ct/course_" + str(course_id)) + "_news_" + str(news_id))
+        if response.status_code == 404 or response.status_code == 403:
+            raise ManabaNotFound()
+        response.raise_for_status()
+        soup = BeautifulSoup(response.text, "html5lib")
+
+        if soup.find("h2", {"class": "msg-subject"}) is None:
+            raise ManabaNotFound()
+
+        news_title = soup.find("h2", {"class": "msg-subject"}).text.strip()
+
+        if soup.find("div", {"class": "msg-info"}).find("a", {"href": "#"}) is not None:
+            news_author = soup \
+                .find("div", {"class": "msg-info"}) \
+                .find("a", {"href": "#"}) \
+                .text.strip()
+        else:
+            news_author = soup \
+                .find("div", {"class": "msg-info"}) \
+                .text.replace("投稿者", "").strip()
+
+        news_posted_at = self.process_datetime(soup.find("span", {"class": "msg-date"}).text.strip())
+        msg_text = soup.find("div", {"class": "msg-text"})
+
+        news_text = msg_text.text.replace(" ", " ").strip()
+        news_html = str(msg_text).replace(" ", " ").strip()
+
+        # last_edit
+        last_modified = soup.find("div", {"class": "msg-lastmod"})
+        last_edited_author = None
+        last_edited_at = None
+        if last_modified is not None:
+            if last_modified.find("a") is not None:
+                last_edited_author = last_modified.find("a").text.strip()
+                last_edited_at = self.process_datetime(
+                    str(last_modified.find("a").next_sibling.string).strip()
+                )
+            else:
+                # 最終更新 <a onclick="return manaba.userballoon('97279', event);" href="user_97279_profile">中山　智美</a> 2021-08-04  10:25
+                last_edited_str = last_modified.text.strip()
+                last_edited_author = re.sub(r"最終更新 (.+) ([0-9]{4}-[0-9]{2}-[0-9]{2} +[0-9]{2}:[0-9]{2})", r"\1",
+                                            last_edited_str)
+                last_edited_at = self.process_datetime(
+                    re.sub(r"最終更新 (.+) ([0-9]{4}-[0-9]{2}-[0-9]{2} +[0-9]{2}:[0-9]{2})", r"\2", last_edited_str))
+
+        return ManabaCourseNews(
+            course_id,
+            news_id,
+            news_title,
+            news_author,
+            news_posted_at,
+            last_edited_author,
+            last_edited_at,
+            news_text,
+            news_html
+        )
+
     @staticmethod
     def process_datetime(datetime_str: Optional[str]) -> Optional[datetime.datetime]:
         """
@@ -773,6 +924,7 @@ class Manaba:
         """
         if datetime_str is None or datetime_str == "":
             return None
+        datetime_str = datetime_str.replace("  ", " ")
         datetime_format = "%Y-%m-%d %H:%M:%S %z" if len(datetime_str) == 19 else "%Y-%m-%d %H:%M %z"
         return datetime.datetime.strptime(datetime_str + " +0900", datetime_format).astimezone(JST)
 
