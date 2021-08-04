@@ -1,5 +1,5 @@
 """
-manaba 小テスト
+manaba アンケート
 """
 
 import datetime

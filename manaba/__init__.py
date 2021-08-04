@@ -7,7 +7,7 @@ manabaのさまざまな情報を取得するためのライブラリです。
 import datetime
 import re
 from typing import Optional, Union
-from urllib.parse import parse_qs, urljoin, urlparse
+from urllib.parse import parse_qs, urlencode, urljoin, urlparse
 
 import bs4.element
 import requests
@@ -28,6 +28,8 @@ from manaba.models.ManabaSurveyDetails import ManabaSurveyDetails
 from manaba.models.ManabaTaskStatus import ManabaTaskStatus
 from manaba.models.ManabaTaskStatusFlag import ManabaTaskStatusFlag, get_task_status
 from manaba.models.ManabaTaskYourStatusFlag import ManabaTaskYourStatusFlag, get_your_status
+from manaba.models.ManabaThread import ManabaThread
+from manaba.models.ManabaThreadComment import ManabaThreadComment
 
 JST = datetime.timezone(datetime.timedelta(hours=+9), 'JST')
 
@@ -567,12 +569,11 @@ class Manaba:
 
         Args:
             course_id: 取得するレポートのコース ID
-            report_id: 取得するレポートのアンケート ID
+            report_id: 取得するレポートのレポート ID
 
         Returns:
             ManabaReportDetails: レポート詳細情報
         """
-
         if not self.__logged_in:
             raise ManabaNotLoggedIn()
 
@@ -633,16 +634,142 @@ class Manaba:
             status
         )
 
+    def get_threads(self,
+                    course_id: int) -> list[ManabaThread]:
+        """
+        指定したコースのスレッド一覧を取得します。
+
+        Args:
+            course_id: 取得するコースのコース ID
+
+        Returns:
+            list[ManabaThread]: コースのスレッド一覧
+        """
+        if not self.__logged_in:
+            raise ManabaNotLoggedIn()
+
+        response = self.session.get(
+            urljoin(self.__base_url, "/ct/course_" + str(course_id)) + "_topics")
+        if response.status_code == 404 or response.status_code == 403:
+            raise ManabaNotFound()
+        response.raise_for_status()
+        soup = BeautifulSoup(response.text, "html5lib")
+
+        std_list = soup.find("table", {"class": "stdlist"})
+        if std_list is None:
+            return []
+
+        thread_tags = std_list.find_all("tr", class_=["row", "row0", "row1"])
+        threads = []
+        for thread_tag in thread_tags:
+            thread_title = thread_tag.find("span", {"class": "thread-title"}).text.strip()
+            thread_link = thread_tag.find("a", {"class": "threadhead"}).get("href")
+            thread_id: int = int(re.sub(r"course_[0-9]+_topics_([0-9]+)_.+", r"\1", thread_link))
+
+            threads.append(ManabaThread(
+                course_id,
+                thread_id,
+                thread_title,
+                None
+            ))
+
+        return threads
+
+    def get_thread(self,
+                   course_id: int,
+                   thread_id: int,
+                   start_id: Optional[int] = None,
+                   page_len: int = 10000) -> ManabaThread:
+        """
+        指定したコース・スレッド ID のスレッド詳細情報を取得します。
+
+        Args:
+            course_id: 取得するコースのコース ID
+            thread_id: 取得するスレッドのスレッド ID
+            start_id: 直近から何番目から取得するか (指定しない場合はすべて)
+            page_len: 1 ページで最大何件コメント取得するか (指定しない場合は 10000 件)
+
+        Returns:
+            ManabaThread: スレッド詳細情報
+
+        Notes:
+            start_id の仕様は manaba 自体の仕様ですが、特殊です。スレッドのコメント数が 50 個ある場合、start_id に 5 を指定すると 45 件目以前を取得します。
+        """
+        if not self.__logged_in:
+            raise ManabaNotLoggedIn()
+
+        params = {
+            "pagelen": page_len
+        }
+        if start_id is not None:
+            params["start_id"] = start_id
+
+        response = self.session.get(
+            urljoin(self.__base_url, "/ct/course_" + str(course_id)) + "_topics_" + str(
+                thread_id) + "_tflat?" + urlencode(params))
+        if response.status_code == 404 or response.status_code == 403:
+            raise ManabaNotFound()
+        response.raise_for_status()
+        soup = BeautifulSoup(response.text, "html5lib")
+
+        comments: list[ManabaThreadComment] = []
+        comment_tags = soup.find_all("div", {"class": "articlecontainer"})
+        for comment_tag in comment_tags:
+            comment_id: int = int(comment_tag.find("h3", {"class": "articlenumber"}).text.strip())
+            comment_title: str = comment_tag.find("div", {"class": "articlesubject"}).text.strip()
+            comment_body: bs4.element.Tag = comment_tag.find("div", {"class": "articlebody-msgbody"})
+            article_info: bs4.element.Tag = comment_tag.find("div", {"class": "articleinfo"})
+
+            # 以下、投稿者名と投稿日時が正常に取れない可能性あり
+            comment_author: Optional[str] = None
+            comment_date: Optional[str] = None
+            if article_info.find("span", {"class": "posted-time"}) is not None:
+                if article_info.find("a", {"href": "#"}) is not None:
+                    # リンクになっている投稿者情報があればそれ
+                    comment_author = article_info.find("a").text.strip()
+                else:
+                    # リンクがなければ投稿後のひとつ前のタグ
+                    comment_author = str(
+                        article_info.find("span", {"class": "posted-time"}).previous_sibling.string).strip()
+
+                comment_date = article_info.find("span", {"class": "posted-time"}).text.strip()
+
+            reply_to_id = None
+            if comment_tag.find("div", {"class": "parentmsg-no"}) is not None:
+                reply_to_id = int(comment_tag.find("div", {"class": "parentmsg-no"}).text.strip())
+
+            deleted = comment_tag.find("div", {"class": "articlecontainer-deleted"}) is not None
+
+            comments.append(ManabaThreadComment(
+                course_id,
+                thread_id,
+                comment_id,
+                comment_title,
+                comment_author,
+                self.process_datetime(comment_date),
+                reply_to_id,
+                deleted,
+                comment_body.text.strip(),
+                str(comment_body).strip()
+            ))
+
+        return ManabaThread(
+            course_id,
+            thread_id,
+            comments[0].title,
+            comments
+        )
+
     @staticmethod
     def process_datetime(datetime_str: Optional[str]) -> Optional[datetime.datetime]:
         """
-        manabaの日時テキスト(YYYY-MM-DD HH:MM:SS)からdatetime.datetimeに変換する
+        manabaの日時テキスト(YYYY-MM-DD HH:MM:SS)から datetime.datetime に変換する
 
         Args:
-            datetime_str:
+            datetime_str: manabaの日時テキスト
 
         Returns:
-
+            Optional[datetime.datetime]: 変換後の datetime.datetime
         """
         if datetime_str is None or datetime_str == "":
             return None

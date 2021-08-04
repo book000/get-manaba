@@ -55,7 +55,6 @@ class ManabaCourse:
 
         Returns:
             int: コース ID
-
         """
         return self._course_id
 

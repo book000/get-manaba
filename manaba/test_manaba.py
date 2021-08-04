@@ -122,8 +122,8 @@ class TestManaba(TestCase):
             querys = self.manaba.get_querys(course_id)
             query_ids = list(map(lambda x: x.query_id, querys))
             query_names = list(map(lambda x: x.title, querys))
-            self.assertIn(query_id, query_ids, "テストデータの小テストIDに合致するタイトルが見つかりません。")
-            self.assertIn(query_title, query_names, "テストデータの小テストタイトルに合致するタイトルが見つかりません。")
+            self.assertIn(query_id, query_ids, "テストデータの小テストIDに合致する小テストが見つかりません。")
+            self.assertIn(query_title, query_names, "テストデータの小テストタイトルに合致する小テストが見つかりません。")
 
     def test_get_query(self) -> None:
         if "test_get_query" not in self.tests:
@@ -188,8 +188,8 @@ class TestManaba(TestCase):
             surveys = self.manaba.get_surveys(course_id)
             survey_ids = list(map(lambda x: x.survey_id, surveys))
             survey_names = list(map(lambda x: x.title, surveys))
-            self.assertIn(survey_id, survey_ids, "テストデータのアンケートIDに合致するタイトルが見つかりません。")
-            self.assertIn(survey_title, survey_names, "テストデータのアンケートタイトルに合致するタイトルが見つかりません。")
+            self.assertIn(survey_id, survey_ids, "テストデータのアンケートIDに合致するアンケートが見つかりません。")
+            self.assertIn(survey_title, survey_names, "テストデータのアンケートタイトルに合致するアンケートが見つかりません。")
 
     def test_get_survey(self) -> None:
         if "test_get_survey" not in self.tests:
@@ -242,8 +242,8 @@ class TestManaba(TestCase):
             reports = self.manaba.get_reports(course_id)
             report_ids = list(map(lambda x: x.report_id, reports))
             report_names = list(map(lambda x: x.title, reports))
-            self.assertIn(report_id, report_ids, "テストデータのレポートIDに合致するタイトルが見つかりません。")
-            self.assertIn(report_title, report_names, "テストデータのレポートタイトルに合致するタイトルが見つかりません。")
+            self.assertIn(report_id, report_ids, "テストデータのレポートIDに合致するレポートが見つかりません。")
+            self.assertIn(report_title, report_names, "テストデータのレポートタイトルに合致するレポートが見つかりません。")
 
     def test_get_report(self) -> None:
         if "test_get_report" not in self.tests:
@@ -282,6 +282,65 @@ class TestManaba(TestCase):
             assert report.status is not None
             self.assertEqual(task_status, report.status.task_status, "課題の状態が一致しません。")
             self.assertEqual(your_status, report.status.your_status, "課題の提出状態が一致しません。")
+
+    def test_get_threads(self) -> None:
+        if "test_get_threads" not in self.tests:
+            self.fail("コンフィグにこのテスト用のテストデータがないため、失敗しました。")
+
+        self.assertRaises(manaba.ManabaNotFound, self.manaba.get_threads, 0)
+
+        for test in self.tests["test_get_threads"]:
+            course_id: int = test["course_id"]
+            thread_id: int = test["thread_id"]
+            thread_title = test["thread_title"]
+            print("thread_title:" + thread_title, "course_id:" + str(course_id), "thread_id:" + str(thread_id))
+
+            threads = self.manaba.get_threads(course_id)
+            thread_ids = list(map(lambda x: x.thread_id, threads))
+            thread_names = list(map(lambda x: x.title, threads))
+            self.assertIn(thread_id, thread_ids, "テストデータのスレッドIDに合致するスレッドが見つかりません。")
+            self.assertIn(thread_title, thread_names, "テストデータのスレッドタイトルに合致するスレッドが見つかりません。")
+
+    def test_get_thread(self) -> None:
+        if "test_get_thread" not in self.tests:
+            self.fail("コンフィグにこのテスト用のテストデータがないため、失敗しました。")
+
+        self.assertRaises(manaba.ManabaNotFound, self.manaba.get_thread,
+                          self.tests["test_get_thread"][0]["course_id"], 0)
+
+        for test in self.tests["test_get_thread"]:
+            course_id: int = test["course_id"]
+            thread_id: int = test["thread_id"]
+            thread_title = test["thread_title"]
+            print("thread_title:" + thread_title, "course_id:" + str(course_id), "thread_id:" + str(thread_id))
+
+            thread = self.manaba.get_thread(course_id, thread_id)
+
+            self.assertEqual(thread_title, thread.title, "テストデータとして渡された thread_title が正しくありません。")
+
+            self.assertNotEqual(None, thread.comments, "スレッドコメントデータが None です。")
+            assert thread.comments is not None
+
+            for comment in thread.comments:
+                comment_test_matches = list(filter(lambda x: x["comment_id"] == comment.comment_id, test["comments"]))
+                if len(comment_test_matches) == 0:
+                    continue
+
+                comment_title = comment_test_matches[0]["title"]
+                comment_author = comment_test_matches[0]["author"]
+                comment_posted_at = Manaba.process_datetime(comment_test_matches[0]["posted_at"])
+                comment_reply_to_id = comment_test_matches[0]["reply_to_id"]
+                comment_deleted = comment_test_matches[0]["deleted"]
+                comment_text = comment_test_matches[0]["text"]
+                comment_html = comment_test_matches[0]["html"]
+
+                self.assertEqual(comment_title, comment.title, "テストデータとして渡された title が正しくありません。")
+                self.assertEqual(comment_author, comment.author, "テストデータとして渡された author が正しくありません。")
+                self.assertEqual(comment_posted_at, comment.posted_at, "テストデータとして渡された posted_at が正しくありません。")
+                self.assertEqual(comment_reply_to_id, comment.reply_to_id, "テストデータとして渡された reply_to_id が正しくありません。")
+                self.assertEqual(comment_deleted, comment.deleted, "テストデータとして渡された deleted が正しくありません。")
+                self.assertEqual(comment_text, comment.text, "テストデータとして渡された text が正しくありません。")
+                self.assertEqual(comment_html, comment.html, "テストデータとして渡された html が正しくありません。")
 
 
 class TestManabaNotLoggedIn(TestCase):

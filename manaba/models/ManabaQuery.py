@@ -56,7 +56,7 @@ class ManabaQuery:
     @property
     def query_id(self) -> int:
         """
-        小テスト ID
+        小テスト ID (URLの一部)
 
         Returns:
             int: ID

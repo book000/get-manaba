@@ -1,5 +1,5 @@
 """
-manaba 小テスト
+manaba レポート
 """
 
 import datetime
@@ -56,7 +56,7 @@ class ManabaReport:
     @property
     def report_id(self) -> int:
         """
-        アンケート ID
+        アンケート ID (URLの一部)
 
         Returns:
             int: ID
