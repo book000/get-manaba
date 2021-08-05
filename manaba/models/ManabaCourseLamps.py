@@ -1,9 +1,10 @@
 """
 manaba コース一覧ページに表示されるランプ管理クラス
 """
+from manaba.models.ManabaModel import ManabaModel
 
 
-class ManabaCourseLamps:
+class ManabaCourseLamps(ManabaModel):
     """
     manaba コース一覧ページに表示されるランプ管理クラス
     """

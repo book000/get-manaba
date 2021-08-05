@@ -4,12 +4,13 @@ manaba アンケート詳細
 import datetime
 from typing import Optional
 
+from manaba.models.ManabaModel import ManabaModel
 from manaba.models.ManabaPortfolioType import ManabaPortfolioType
 from manaba.models.ManabaStudentReSubmitType import ManabaStudentReSubmitType
 from manaba.models.ManabaTaskStatus import ManabaTaskStatus
 
 
-class ManabaSurveyDetails:
+class ManabaSurveyDetails(ManabaModel):
     """
     manaba アンケート詳細
     """

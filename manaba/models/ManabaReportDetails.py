@@ -4,13 +4,14 @@ manaba レポート詳細
 import datetime
 from typing import Optional
 
+from manaba.models.ManabaModel import ManabaModel
 from manaba.models.ManabaPortfolioType import ManabaPortfolioType
 from manaba.models.ManabaResultViewType import ManabaResultViewType
 from manaba.models.ManabaStudentReSubmitType import ManabaStudentReSubmitType
 from manaba.models.ManabaTaskStatus import ManabaTaskStatus
 
 
-class ManabaReportDetails:
+class ManabaReportDetails(ManabaModel):
     """
     manaba レポート詳細
     """

@@ -6,12 +6,13 @@ import datetime
 from typing import Optional, Union
 
 from manaba.models.ManabaGradePosition import ManabaGradePosition
+from manaba.models.ManabaModel import ManabaModel
 from manaba.models.ManabaPortfolioType import ManabaPortfolioType
 from manaba.models.ManabaResultViewType import ManabaResultViewType
 from manaba.models.ManabaTaskStatus import ManabaTaskStatus
 
 
-class ManabaQueryDetails:
+class ManabaQueryDetails(ManabaModel):
     """
     manaba 小テスト詳細
     """

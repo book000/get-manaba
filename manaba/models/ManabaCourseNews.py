@@ -5,8 +5,10 @@ manaba コースニュース
 import datetime
 from typing import Optional
 
+from manaba.models.ManabaModel import ManabaModel
 
-class ManabaCourseNews:
+
+class ManabaCourseNews(ManabaModel):
     """
     manaba コースニュース
     """

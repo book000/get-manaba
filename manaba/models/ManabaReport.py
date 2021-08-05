@@ -5,10 +5,11 @@ manaba レポート
 import datetime
 from typing import Optional
 
+from manaba.models.ManabaModel import ManabaModel
 from manaba.models.ManabaTaskStatus import ManabaTaskStatus
 
 
-class ManabaReport:
+class ManabaReport(ManabaModel):
     """
     manaba レポート
     """

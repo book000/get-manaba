@@ -3,8 +3,10 @@ manaba 成績ポジション
 """
 from typing import Optional
 
+from manaba.models.ManabaModel import ManabaModel
 
-class ManabaGradePosition:
+
+class ManabaGradePosition(ManabaModel):
     """
     manaba 成績ポジション
     """

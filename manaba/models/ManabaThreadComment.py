@@ -5,8 +5,10 @@ manaba スレッドコメント
 import datetime
 from typing import Optional
 
+from manaba.models.ManabaModel import ManabaModel
 
-class ManabaThreadComment:
+
+class ManabaThreadComment(ManabaModel):
     """
     manaba スレッドコメント
     """

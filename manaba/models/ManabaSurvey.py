@@ -5,10 +5,11 @@ manaba アンケート
 import datetime
 from typing import Optional
 
+from manaba.models.ManabaModel import ManabaModel
 from manaba.models.ManabaTaskStatus import ManabaTaskStatus
 
 
-class ManabaSurvey:
+class ManabaSurvey(ManabaModel):
     """
     manaba アンケート
     """

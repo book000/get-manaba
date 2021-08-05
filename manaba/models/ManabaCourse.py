@@ -5,9 +5,10 @@ manaba コース情報
 from typing import Optional
 
 from manaba.models.ManabaCourseLamps import ManabaCourseLamps
+from manaba.models.ManabaModel import ManabaModel
 
 
-class ManabaCourse:
+class ManabaCourse(ManabaModel):
     """
     manaba コース情報
     """

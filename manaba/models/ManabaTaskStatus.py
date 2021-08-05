@@ -4,11 +4,12 @@
 
 from typing import Optional
 
+from manaba.models.ManabaModel import ManabaModel
 from manaba.models.ManabaTaskStatusFlag import ManabaTaskStatusFlag
 from manaba.models.ManabaTaskYourStatusFlag import ManabaTaskYourStatusFlag
 
 
-class ManabaTaskStatus:
+class ManabaTaskStatus(ManabaModel):
     """
     manaba タスク(小テスト・アンケート・レポート)のステータス
     """

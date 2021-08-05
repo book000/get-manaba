@@ -4,10 +4,11 @@ manaba スレッド
 
 from typing import Optional
 
+from manaba.models.ManabaModel import ManabaModel
 from manaba.models.ManabaThreadComment import ManabaThreadComment
 
 
-class ManabaThread:
+class ManabaThread(ManabaModel):
     """
     manaba スレッド
     """
@@ -18,7 +19,7 @@ class ManabaThread:
                  title: Optional[str],
                  comments: Optional[list[ManabaThreadComment]]):
         """
-        manaba アンケート
+        manaba スレッド
 
         Args:
             course_id: コース ID
