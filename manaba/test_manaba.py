@@ -324,7 +324,7 @@ class TestManaba(TestCase):
             assert thread.comments is not None
 
             for comment in thread.comments:
-                comment_test_matches = list(filter(lambda x: x["comment_id"] == comment.comment_id, test["comments"]))
+                comment_test_matches = list(filter(lambda x: comment.comment_id == x["comment_id"], test["comments"]))
                 if len(comment_test_matches) == 0:
                     continue
 
