@@ -158,7 +158,11 @@ disable=print-statement,
         invalid-name,
         too-many-locals,
         too-many-lines,
-        missing-function-docstring
+        too-many-branches,
+        too-many-arguments,
+        missing-function-docstring,
+        missing-class-docstring,
+        missing-module-docstring
 
 # Enable the message, report, category or checker with the given id(s). You can
 # either give multiple identifier separated by comma (,) or put this option

@@ -238,7 +238,6 @@ class Manaba:
         course_cards = my_courses.find_all("div", {"class": "courselistweekly-c"})
 
         courses = []
-        course_row: bs4.element.Tag
         for course_card in course_cards:
             course_name = course_card.find("a").text.strip()
             course_link = course_card.find("a").get("href")
