@@ -13,6 +13,7 @@ import bs4.element
 import requests
 from bs4 import BeautifulSoup
 
+from manaba.models.ManabaContent import ManabaContent
 from manaba.models.ManabaCourse import ManabaCourse
 from manaba.models.ManabaCourseLamps import ManabaCourseLamps
 from manaba.models.ManabaCourseNews import ManabaCourseNews
@@ -908,6 +909,54 @@ class Manaba:
             news_text,
             news_html
         )
+
+    def get_contents(self,
+                     course_id: int) -> list[ManabaContent]:
+        """
+        指定したコースのコンテンツ一覧を取得します。
+
+        Args:
+            course_id: 取得するコースのコース ID
+
+        Returns:
+            list[ManabaContent]: コースのコンテンツ一覧
+
+        Notes:
+            一部の項目のプロパティは None になります。詳細情報は Manaba.get_content で取得できます。
+        """
+        if not self.__logged_in:
+            raise ManabaNotLoggedIn()
+
+        response = self.session.get(
+            urljoin(self.__base_url, "/ct/course_" + str(course_id)) + "_page")
+        if response.status_code == 404 or response.status_code == 403:
+            raise ManabaNotFound()
+        response.raise_for_status()
+        soup = BeautifulSoup(response.text, "html5lib")
+
+        contents_list = soup.find("table", {"class": "contentslist"})
+        if contents_list is None:
+            return []
+
+        trs = contents_list.find_all("tr")
+        contents = []
+        for tr in trs:
+            about = tr.find("td", {"class": "about-contents"})
+            title = about.find("a").text.strip()
+            link = about.find("a").get("href")
+            content_id = re.sub(r"page_(.+)", r"\1", link)
+            description = about.find("span").text.strip()
+
+            contents.append(ManabaContent(
+                course_id,
+                content_id,
+                title,
+                description,
+                None,
+                None
+            ))
+
+        return contents
 
     @staticmethod
     def process_datetime(datetime_str: Optional[str]) -> Optional[datetime.datetime]:

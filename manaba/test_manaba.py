@@ -393,6 +393,29 @@ class TestManaba(TestCase):
             self.assertEqual(text, news.text, "テストデータとして渡された text が正しくありません。")
             self.assertEqual(html, news.html, "テストデータとして渡された html が正しくありません。")
 
+    def test_get_contents(self) -> None:
+        if "test_get_contents" not in self.tests:
+            self.fail("コンフィグにこのテスト用のテストデータがないため、失敗しました。")
+
+        self.assertRaises(manaba.ManabaNotFound, self.manaba.get_news,
+                          self.tests["test_get_contents"][0]["course_id"], 0)
+
+        for test in self.tests["test_get_contents"]:
+            course_id: int = test["course_id"]
+            content_id = test["content_id"]
+            content_title = test["content_title"]
+            content_description = test["content_description"]
+            print("content_title:" + content_title, "course_id:" + str(course_id), "content_id:" + str(content_id))
+
+            contents = self.manaba.get_contents(course_id)
+            content_ids = list(map(lambda x: x.content_id, contents))
+            content_titles = list(map(lambda x: x.title, contents))
+            content_descriptions = list(map(lambda x: x.description, contents))
+            self.assertIn(content_id, content_ids, "テストデータのコンテンツIDに合致するコンテンツが見つかりません。")
+            self.assertIn(content_title, content_titles, "テストデータのコンテンツタイトルに合致するコンテンツが見つかりません。")
+            if content_description is not None:
+                self.assertIn(content_description, content_descriptions, "テストデータのコンテンツ説明に合致するコンテンツが見つかりません。")
+
 
 class TestManabaNotLoggedIn(TestCase):
     def setUp(self) -> None:
