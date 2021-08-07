@@ -3,8 +3,7 @@ manaba モデル群
 """
 
 
-class ManabaModel:
+class ManabaModel:  # pylint: disable=too-few-public-methods
     """
     manaba モデル群
     """
-    pass
