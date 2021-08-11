@@ -3,7 +3,8 @@ import os
 from unittest import TestCase
 
 import manaba
-from manaba import Manaba, ManabaFile
+from manaba import Manaba
+from manaba.models.ManabaFile import ManabaFile
 from manaba.models.ManabaPortfolioType import get_portfolio_type_from_name
 from manaba.models.ManabaResultViewType import get_result_view_type_from_name
 from manaba.models.ManabaStudentReSubmitType import get_student_resubmit_type_from_name
