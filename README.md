@@ -1,29 +1,28 @@
 # get-manaba
 
-Library for get various information about [manaba](https://manaba.jp).
+[日本語の README はこちらから](README-ja.md)
 
-[manaba](https://manaba.jp)のさまざまな情報を取得するためのライブラリです。
+Library for get various information about [manaba](https://manaba.jp).
 
 ## Warning / Disclaimer
 
-- The developer assumes no responsibility for any problems arising from the use of this library or sample programs.
-- Please do not perform a large number of requests using this library.
-- The sample program has a timeout of at least 1 second for each request to reduce the load on the manaba server.
+- **The developer assumes no responsibility for any problems resulting from the use of this project and library. Use at your own risk.**
+- Do not use this library to make many requests in a short amount of time.
+
+## Documentation
+
+- [get-manaba documents](https://book000.github.io/get-manaba/)
 
 ## Requirements
 
-- manaba (Tested with `manaba 2.95`)
-- Python 3.6+
-- [requirements.txt](requirements.txt): `requests`, `html5lib`, `bs4`, `fastapi`
+- manaba (Tested with `manaba 2.96`)
+- Python 3.9+
+- [requirements.txt](requirements.txt): `requests`, `beautifulsoup4`, `html5lib`
 
 ## Installation
 
 1. Clone from GitHub repository: `git clone https://github.com/book000/get-manaba.git`
 2. Install the dependency package from `requirements.txt`: `pip3 install -U -r requirements.txt`
-
-## Docs
-
-- [Docs](DOCS.md)
 
 ## License
 

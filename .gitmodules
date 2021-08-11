@@ -1,0 +1,4 @@
+[submodule "build/html"]
+	path = build/html
+	url = git@github.com:book000/get-manaba.git
+	branch = gh-pages

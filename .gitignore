@@ -1,6 +1,9 @@
 venv
 .idea
-examples/data/
-__pycache__
+config.json
+tests.json
 *.pyc
-*.json
+test.py
+get_manaba.egg-info
+docs/
+build/
