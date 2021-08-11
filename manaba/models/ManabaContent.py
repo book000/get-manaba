@@ -1,7 +1,7 @@
 """
 manaba コンテンツ
 """
-
+import datetime
 from typing import Optional
 
 from manaba.models.ManabaContentPage import ManabaContentPage
@@ -18,7 +18,7 @@ class ManabaContent(ManabaModel):
                  content_id: str,
                  title: str,
                  description: str,
-                 updated_at: Optional[str],
+                 updated_at: Optional[datetime.datetime],
                  pages: Optional[list[ManabaContentPage]]):
         """
         manaba コンテンツ
@@ -80,7 +80,7 @@ class ManabaContent(ManabaModel):
         return self._description
 
     @property
-    def updated_at(self) -> Optional[str]:
+    def updated_at(self) -> Optional[datetime.datetime]:
         """
         更新日時
 

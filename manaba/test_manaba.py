@@ -397,8 +397,7 @@ class TestManaba(TestCase):
         if "test_get_contents" not in self.tests:
             self.fail("コンフィグにこのテスト用のテストデータがないため、失敗しました。")
 
-        self.assertRaises(manaba.ManabaNotFound, self.manaba.get_news,
-                          self.tests["test_get_contents"][0]["course_id"], 0)
+        self.assertRaises(manaba.ManabaNotFound, self.manaba.get_contents, 0)
 
         for test in self.tests["test_get_contents"]:
             course_id: int = test["course_id"]
@@ -415,6 +414,29 @@ class TestManaba(TestCase):
             self.assertIn(content_title, content_titles, "テストデータのコンテンツタイトルに合致するコンテンツが見つかりません。")
             if content_description is not None:
                 self.assertIn(content_description, content_descriptions, "テストデータのコンテンツ説明に合致するコンテンツが見つかりません。")
+
+    def test_get_content_pages(self) -> None:
+        if "test_get_content_pages" not in self.tests:
+            self.fail("コンフィグにこのテスト用のテストデータがないため、失敗しました。")
+
+        self.assertRaises(manaba.ManabaNotFound, self.manaba.get_content_pages,
+                          self.tests["test_get_content_pages"][0]["course_id"], 0)
+
+        for test in self.tests["test_get_content_pages"]:
+            course_id: int = test["course_id"]
+            content_id = test["content_id"]
+            pages = test["pages"]
+
+            content_pages = self.manaba.get_content_pages(course_id, content_id)
+            page_ids = list(map(lambda x: x.page_id, content_pages))
+            titles = list(map(lambda x: x.title, content_pages))
+
+            for page in pages:
+                page_id = page["page_id"]
+                title = page["title"]
+
+                self.assertIn(page_id, page_ids, "テストデータのページIDに合致するコンテンツが見つかりません。")
+                self.assertIn(title, titles, "テストデータのページタイトルに合致するコンテンツが見つかりません。")
 
 
 class TestManabaNotLoggedIn(TestCase):

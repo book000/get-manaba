@@ -14,6 +14,7 @@ import requests
 from bs4 import BeautifulSoup
 
 from manaba.models.ManabaContent import ManabaContent
+from manaba.models.ManabaContentPage import ManabaContentPage
 from manaba.models.ManabaCourse import ManabaCourse
 from manaba.models.ManabaCourseLamps import ManabaCourseLamps
 from manaba.models.ManabaCourseNews import ManabaCourseNews
@@ -851,7 +852,6 @@ class Manaba:
         if not self.__logged_in:
             raise ManabaNotLoggedIn()
 
-        print(urljoin(self.__base_url, "/ct/course_" + str(course_id)) + "_news_" + str(news_id))
         response = self.session.get(
             urljoin(self.__base_url, "/ct/course_" + str(course_id)) + "_news_" + str(news_id))
         if response.status_code == 404 or response.status_code == 403:
@@ -957,6 +957,52 @@ class Manaba:
             ))
 
         return contents
+
+    def get_content_pages(self,
+                          course_id: int,
+                          content_id: str) -> list[ManabaContentPage]:
+        """
+        指定したコンテンツ ID のコンテンツページ一覧を取得します。
+
+        Args:
+            course_id: 取得するコースのコース ID
+            content_id: 取得するコンテンツのニュース ID
+        """
+        if not self.__logged_in:
+            raise ManabaNotLoggedIn()
+
+        response = self.session.get(
+            urljoin(self.__base_url, "/ct/page_" + str(content_id)))
+        if response.status_code == 404 or response.status_code == 403:
+            raise ManabaNotFound()
+        response.raise_for_status()
+        soup = BeautifulSoup(response.text, "html5lib")
+
+        if soup.find("div", {"class": "articletext"}) is None:
+            raise ManabaNotFound()
+
+        contents_list = soup.find("ul", {"class": "contentslist"}).find_all("li")
+        pages = []
+        for content in contents_list:
+            page_title = content.text.strip()
+            page_link = content.find("a").get("href")
+            page_id: int = int(re.sub(r"page_[a-z0-9]+_([a-z0-9]+)", r"\1", page_link))
+            pages.append(ManabaContentPage(
+                course_id,
+                content_id,
+                page_id,
+                page_title,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None
+            ))
+
+        return pages
 
     @staticmethod
     def process_datetime(datetime_str: Optional[str]) -> Optional[datetime.datetime]:
@@ -1093,4 +1139,10 @@ class ManabaNotFound(Exception):
 class ManabaInternalError(Exception):
     """
     処理に失敗した
+    """
+
+
+class ManabaContentDisabled(Exception):
+    """
+    コンテンツページが無効化（公開期間外などにより）されている
     """
