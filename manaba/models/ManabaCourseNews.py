@@ -5,6 +5,7 @@ manaba コースニュース
 import datetime
 from typing import Optional
 
+from manaba.models.ManabaFile import ManabaFile
 from manaba.models.ManabaModel import ManabaModel
 
 
@@ -43,6 +44,17 @@ class ManabaCourseNews(ManabaModel):
         self._last_edited_author = last_edited_author
         self._last_edited_at = last_edited_at
         self._html = html
+        self._files: list[ManabaFile] = []
+
+    def add_file(self,
+                 file: ManabaFile) -> None:
+        """
+        添付ファイルを追加する
+
+        Args:
+            file: ManabaFile オブジェクト
+        """
+        self._files.append(file)
 
     @property
     def course_id(self) -> int:
@@ -118,9 +130,22 @@ class ManabaCourseNews(ManabaModel):
     @property
     def html(self) -> Optional[str]:
         """
-        コメントの HTML
+        ニュースの HTML
 
         Returns:
             Optional[str]: コメントの HTML
         """
         return self._html
+
+    @property
+    def files(self) -> list[ManabaFile]:
+        """
+        ニュースに添付されているファイルの一覧
+
+        Returns:
+            list[ManabaFile]: コメントに添付されているファイルの一覧
+
+        Notes:
+            この項目は、取得できない もしくは 存在しなかった としても空のリストになります。
+        """
+        return self._files

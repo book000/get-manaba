@@ -5,6 +5,7 @@ manaba スレッドコメント
 import datetime
 from typing import Optional
 
+from manaba import ManabaFile
 from manaba.models.ManabaModel import ManabaModel
 
 
@@ -46,6 +47,17 @@ class ManabaThreadComment(ManabaModel):
         self._reply_to_id = reply_to_id
         self._deleted = deleted
         self._html = html
+        self._files: list[ManabaFile] = []
+
+    def add_file(self,
+                 file: ManabaFile) -> None:
+        """
+        添付ファイルを追加する
+
+        Args:
+            file: ManabaFile オブジェクト
+        """
+        self._files.append(file)
 
     @property
     def course_id(self) -> int:
@@ -146,3 +158,16 @@ class ManabaThreadComment(ManabaModel):
             Optional[str]: コメントの HTML
         """
         return self._html
+
+    @property
+    def files(self) -> list[ManabaFile]:
+        """
+        コメントに添付されているファイルの一覧
+
+        Returns:
+            list[ManabaFile]: コメントに添付されているファイルの一覧
+
+        Notes:
+            この項目は、取得できない もしくは 存在しなかった としても空のリストになります。
+        """
+        return self._files

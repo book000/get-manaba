@@ -757,8 +757,7 @@ class Manaba:
 
             deleted = comment_tag.find("div", {"class": "articlecontainer-deleted"}) is not None
 
-            # noinspection PyArgumentList
-            comments.append(ManabaThreadComment(
+            manaba_thread_comment = ManabaThreadComment(
                 course_id,
                 thread_id,
                 comment_id,
@@ -767,8 +766,23 @@ class Manaba:
                 self.process_datetime(comment_date),
                 reply_to_id,
                 deleted,
-                str(comment_body).strip()
-            ))
+                str(comment_body).replace(" ", "&nbsp;").strip()
+            )
+
+            attachments = comment_tag.find_all("div", {"class": "inlineattachment"})
+            for attachment in attachments:
+                a_tag = attachment.find("div", {"class": "inlineaf-description"}).find("a")
+                manaba_thread_comment.add_file(ManabaFile(
+                    manaba_thread_comment,
+                    re.sub(r"(.+?) - ([0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2})", r"\1",
+                           a_tag.text).strip(),
+                    self.process_datetime(
+                        re.sub(r"(.+?) - ([0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2})", r"\2",
+                               a_tag.text).strip()),
+                    urljoin(self.__base_url + "/ct/", a_tag.get("href"))
+                ))
+
+            comments.append(manaba_thread_comment)
 
         return ManabaThread(
             course_id,
@@ -877,8 +891,7 @@ class Manaba:
         news_posted_at = self.process_datetime(soup.find("span", {"class": "msg-date"}).text.strip())
         msg_text = soup.find("div", {"class": "msg-text"})
 
-        # noinspection PyArgumentList
-        news_html = str(msg_text).replace(" ", " ").strip()
+        news_html = str(msg_text).replace(" ", "&nbsp;").strip()
 
         # last_edit
         last_modified = soup.find("div", {"class": "msg-lastmod"})
@@ -898,7 +911,7 @@ class Manaba:
                 last_edited_at = self.process_datetime(
                     re.sub(r"最終更新 (.+) ([0-9]{4}-[0-9]{2}-[0-9]{2} +[0-9]{2}:[0-9]{2})", r"\2", last_edited_str))
 
-        return ManabaCourseNews(
+        manaba_course_news = ManabaCourseNews(
             course_id,
             news_id,
             news_title,
@@ -908,6 +921,21 @@ class Manaba:
             last_edited_at,
             news_html
         )
+
+        attachments = soup.find_all("div", {"class": "inlineattachment"})
+        for attachment in attachments:
+            a_tag = attachment.find("div", {"class": "inlineaf-description"}).find("a")
+            manaba_course_news.add_file(ManabaFile(
+                manaba_course_news,
+                re.sub(r"(.+?) - ([0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2})", r"\1",
+                       a_tag.text).strip(),
+                self.process_datetime(
+                    re.sub(r"(.+?) - ([0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2})", r"\2",
+                           a_tag.text).strip()),
+                urljoin(self.__base_url + "/ct/", a_tag.get("href"))
+            ))
+
+        return manaba_course_news
 
     def get_contents(self,
                      course_id: int) -> list[ManabaContent]:
@@ -1072,8 +1100,7 @@ class Manaba:
         if viewable:
             article_text = soup.find("div", {"class": "articletext"})
 
-            # noinspection PyArgumentList
-            html = str(article_text).replace(" ", " ").strip()
+            html = str(article_text).replace(" ", "&nbsp;").strip()
 
         manaba_content_page = ManabaContentPage(
             course_id,

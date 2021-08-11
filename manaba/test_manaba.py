@@ -3,7 +3,7 @@ import os
 from unittest import TestCase
 
 import manaba
-from manaba import Manaba
+from manaba import Manaba, ManabaFile
 from manaba.models.ManabaPortfolioType import get_portfolio_type_from_name
 from manaba.models.ManabaResultViewType import get_result_view_type_from_name
 from manaba.models.ManabaStudentReSubmitType import get_student_resubmit_type_from_name
@@ -334,6 +334,7 @@ class TestManaba(TestCase):
                 comment_reply_to_id = comment_test_matches[0]["reply_to_id"]
                 comment_deleted = comment_test_matches[0]["deleted"]
                 comment_html = comment_test_matches[0]["html"]
+                comment_files = comment_test_matches[0]["files"]
 
                 self.assertEqual(comment_title, comment.title, "テストデータとして渡された title が正しくありません。")
                 self.assertEqual(comment_author, comment.author, "テストデータとして渡された author が正しくありません。")
@@ -341,6 +342,16 @@ class TestManaba(TestCase):
                 self.assertEqual(comment_reply_to_id, comment.reply_to_id, "テストデータとして渡された reply_to_id が正しくありません。")
                 self.assertEqual(comment_deleted, comment.deleted, "テストデータとして渡された deleted が正しくありません。")
                 self.assertEqual(comment_html, comment.html, "テストデータとして渡された html が正しくありません。")
+
+                for file in comment_files:
+                    matches = list(filter(lambda x: x.name == file["name"], comment.files))
+                    if len(matches) == 0:
+                        self.fail("テストデータとして渡された name:" + file["name"] + " ファイルが見つかりません。")
+
+                    match = matches[0]
+                    self.assertEqual(Manaba.process_datetime(file["uploaded_at"]), match.uploaded_at,
+                                     "テストデータとして渡された uploaded_at が正しくありません。")
+                    self.assertEqual(file["download_url"], match.download_url, "テストデータとして渡された download_url が正しくありません。")
 
     def test_get_news_list(self) -> None:
         if "test_get_news_list" not in self.tests:
@@ -379,6 +390,7 @@ class TestManaba(TestCase):
             last_edited_author = test["last_edited_author"]
             last_edited_at = Manaba.process_datetime(test["last_edited_at"])
             html = test["html"]
+            files = test["files"]
 
             news = self.manaba.get_news(course_id, news_id)
 
@@ -388,6 +400,16 @@ class TestManaba(TestCase):
             self.assertEqual(last_edited_author, news.last_edited_author, "テストデータとして渡された last_edited_author が正しくありません。")
             self.assertEqual(last_edited_at, news.last_edited_at, "テストデータとして渡された last_edited_at が正しくありません。")
             self.assertEqual(html, news.html, "テストデータとして渡された html が正しくありません。")
+
+            for file in files:
+                matches = list(filter(lambda x: x.name == file["name"], news.files))
+                if len(matches) == 0:
+                    self.fail("テストデータとして渡された name:" + file["name"] + " ファイルが見つかりません。")
+
+                matched: ManabaFile = matches[0]
+                self.assertEqual(Manaba.process_datetime(file["uploaded_at"]), matched.uploaded_at,
+                                 "テストデータとして渡された uploaded_at が正しくありません。")
+                self.assertEqual(file["download_url"], matched.download_url, "テストデータとして渡された download_url が正しくありません。")
 
     def test_get_contents(self) -> None:
         if "test_get_contents" not in self.tests:
@@ -456,6 +478,7 @@ class TestManaba(TestCase):
             publish_start_at = Manaba.process_datetime(test["publish_start_at"])
             publish_end_at = Manaba.process_datetime(test["publish_end_at"])
             html = test["html"]
+            files = test["files"]
 
             content_page = self.manaba.get_content_page(content_id, page_id)
             self.assertEqual(course_id, content_page.course_id, "テストデータとして渡された course_id が正しくありません。")
@@ -468,6 +491,16 @@ class TestManaba(TestCase):
                              "テストデータとして渡された publish_start_at が正しくありません。")
             self.assertEqual(publish_end_at, content_page.publish_end_at, "テストデータとして渡された publish_end_at が正しくありません。")
             self.assertEqual(html, content_page.html, "テストデータとして渡された html が正しくありません。")
+
+            for file in files:
+                matches = list(filter(lambda x: x.name == file["name"], content_page.files))
+                if len(matches) == 0:
+                    self.fail("テストデータとして渡された name:" + file["name"] + " ファイルが見つかりません。")
+
+                match = matches[0]
+                self.assertEqual(Manaba.process_datetime(file["uploaded_at"]), match.uploaded_at,
+                                 "テストデータとして渡された uploaded_at が正しくありません。")
+                self.assertEqual(file["download_url"], match.download_url, "テストデータとして渡された download_url が正しくありません。")
 
 
 class TestManabaNotLoggedIn(TestCase):
