@@ -21,7 +21,6 @@ class ManabaCourseNews(ManabaModel):
                  posted_at: Optional[datetime.datetime],
                  last_edited_author: Optional[str],
                  last_edited_at: Optional[datetime.datetime],
-                 text: Optional[str],
                  html: Optional[str]):
         """
         manaba コースニュース
@@ -34,7 +33,6 @@ class ManabaCourseNews(ManabaModel):
             posted_at: 投稿日時
             last_edited_author: 最終更新者
             last_edited_at: 最終更新日時
-            text: ニューステキスト
             html: ニュース HTML
         """
         self._course_id = course_id
@@ -44,7 +42,6 @@ class ManabaCourseNews(ManabaModel):
         self._posted_at = posted_at
         self._last_edited_author = last_edited_author
         self._last_edited_at = last_edited_at
-        self._text = text
         self._html = html
 
     @property
@@ -117,19 +114,6 @@ class ManabaCourseNews(ManabaModel):
             Optional[datetime.datetime]: 最終更新日時
         """
         return self._last_edited_at
-
-    @property
-    def text(self) -> Optional[str]:
-        """
-        コメントのテキスト
-
-        Returns:
-            Optional[str]: コメントのプレーンテキスト
-
-        Notes:
-            投稿者によって設定された太字や文字色等はこの項目では取得できません。ManabaNews.html を使用してください。
-        """
-        return self._text
 
     @property
     def html(self) -> Optional[str]:

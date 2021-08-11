@@ -22,7 +22,6 @@ class ManabaThreadComment(ManabaModel):
                  posted_at: Optional[datetime.datetime],
                  reply_to_id: Optional[int],
                  deleted: bool,
-                 text: Optional[str],
                  html: Optional[str]):
         """
         manaba スレッドコメント
@@ -36,7 +35,6 @@ class ManabaThreadComment(ManabaModel):
             posted_at: 投稿日時
             reply_to_id: リプライ先コメント ID
             deleted: 削除済みか
-            text: コメントテキスト
             html: コメント HTML
         """
         self._course_id = course_id
@@ -47,7 +45,6 @@ class ManabaThreadComment(ManabaModel):
         self._posted_at = posted_at
         self._reply_to_id = reply_to_id
         self._deleted = deleted
-        self._text = text
         self._html = html
 
     @property
@@ -139,19 +136,6 @@ class ManabaThreadComment(ManabaModel):
             bool: 削除されている場合は True、削除されていない場合は False
         """
         return self._deleted
-
-    @property
-    def text(self) -> Optional[str]:
-        """
-        コメントのテキスト
-
-        Returns:
-            Optional[str]: コメントのプレーンテキスト
-
-        Notes:
-            投稿者によって設定された太字や文字色等はこの項目では取得できません。ManabaThreadComment.html を使用してください。
-        """
-        return self._text
 
     @property
     def html(self) -> Optional[str]:

@@ -333,7 +333,6 @@ class TestManaba(TestCase):
                 comment_posted_at = Manaba.process_datetime(comment_test_matches[0]["posted_at"])
                 comment_reply_to_id = comment_test_matches[0]["reply_to_id"]
                 comment_deleted = comment_test_matches[0]["deleted"]
-                comment_text = comment_test_matches[0]["text"]
                 comment_html = comment_test_matches[0]["html"]
 
                 self.assertEqual(comment_title, comment.title, "テストデータとして渡された title が正しくありません。")
@@ -341,7 +340,6 @@ class TestManaba(TestCase):
                 self.assertEqual(comment_posted_at, comment.posted_at, "テストデータとして渡された posted_at が正しくありません。")
                 self.assertEqual(comment_reply_to_id, comment.reply_to_id, "テストデータとして渡された reply_to_id が正しくありません。")
                 self.assertEqual(comment_deleted, comment.deleted, "テストデータとして渡された deleted が正しくありません。")
-                self.assertEqual(comment_text, comment.text, "テストデータとして渡された text が正しくありません。")
                 self.assertEqual(comment_html, comment.html, "テストデータとして渡された html が正しくありません。")
 
     def test_get_news_list(self) -> None:
@@ -380,7 +378,6 @@ class TestManaba(TestCase):
             posted_at = Manaba.process_datetime(test["posted_at"])
             last_edited_author = test["last_edited_author"]
             last_edited_at = Manaba.process_datetime(test["last_edited_at"])
-            text = test["text"]
             html = test["html"]
 
             news = self.manaba.get_news(course_id, news_id)
@@ -390,7 +387,6 @@ class TestManaba(TestCase):
             self.assertEqual(posted_at, news.posted_at, "テストデータとして渡された posted_at が正しくありません。")
             self.assertEqual(last_edited_author, news.last_edited_author, "テストデータとして渡された last_edited_author が正しくありません。")
             self.assertEqual(last_edited_at, news.last_edited_at, "テストデータとして渡された last_edited_at が正しくありません。")
-            self.assertEqual(text, news.text, "テストデータとして渡された text が正しくありません。")
             self.assertEqual(html, news.html, "テストデータとして渡された html が正しくありません。")
 
     def test_get_contents(self) -> None:
@@ -419,15 +415,13 @@ class TestManaba(TestCase):
         if "test_get_content_pages" not in self.tests:
             self.fail("コンフィグにこのテスト用のテストデータがないため、失敗しました。")
 
-        self.assertRaises(manaba.ManabaNotFound, self.manaba.get_content_pages,
-                          self.tests["test_get_content_pages"][0]["course_id"], 0)
+        self.assertRaises(manaba.ManabaNotFound, self.manaba.get_content_pages, "")
 
         for test in self.tests["test_get_content_pages"]:
-            course_id: int = test["course_id"]
             content_id = test["content_id"]
             pages = test["pages"]
 
-            content_pages = self.manaba.get_content_pages(course_id, content_id)
+            content_pages = self.manaba.get_content_pages(content_id)
             page_ids = list(map(lambda x: x.page_id, content_pages))
             titles = list(map(lambda x: x.title, content_pages))
 
@@ -437,6 +431,43 @@ class TestManaba(TestCase):
 
                 self.assertIn(page_id, page_ids, "テストデータのページIDに合致するコンテンツが見つかりません。")
                 self.assertIn(title, titles, "テストデータのページタイトルに合致するコンテンツが見つかりません。")
+
+    def test_get_content_page(self) -> None:
+        if "test_get_content_page" not in self.tests:
+            self.fail("コンフィグにこのテスト用のテストデータがないため、失敗しました。")
+
+        self.assertRaises(manaba.ManabaNotFound, self.manaba.get_content_page,
+                          self.tests["test_get_content_page"][0]["content_id"], 1)
+
+        for test in self.tests["test_get_content_page"]:
+            content_id = test["content_id"]
+            page_id: int = test["page_id"]
+
+            course_id: int = test["course_id"]
+            title = test["title"]
+
+            print("title:" + title, "course_id:" + str(course_id), "content_id:" + content_id,
+                  "page_id:" + str(page_id))
+
+            author = test["author"]
+            version: float = test["version"]
+            viewable: bool = test["viewable"]
+            last_edited_at = Manaba.process_datetime(test["last_edited_at"])
+            publish_start_at = Manaba.process_datetime(test["publish_start_at"])
+            publish_end_at = Manaba.process_datetime(test["publish_end_at"])
+            html = test["html"]
+
+            content_page = self.manaba.get_content_page(content_id, page_id)
+            self.assertEqual(course_id, content_page.course_id, "テストデータとして渡された course_id が正しくありません。")
+            self.assertEqual(title, content_page.title, "テストデータとして渡された title が正しくありません。")
+            self.assertEqual(author, content_page.author, "テストデータとして渡された author が正しくありません。")
+            self.assertEqual(version, content_page.version, "テストデータとして渡された version が正しくありません。")
+            self.assertEqual(viewable, content_page.viewable, "テストデータとして渡された viewable が正しくありません。")
+            self.assertEqual(last_edited_at, content_page.last_edited_at, "テストデータとして渡された last_edited_at が正しくありません。")
+            self.assertEqual(publish_start_at, content_page.publish_start_at,
+                             "テストデータとして渡された publish_start_at が正しくありません。")
+            self.assertEqual(publish_end_at, content_page.publish_end_at, "テストデータとして渡された publish_end_at が正しくありません。")
+            self.assertEqual(html, content_page.html, "テストデータとして渡された html が正しくありません。")
 
 
 class TestManabaNotLoggedIn(TestCase):

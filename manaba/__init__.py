@@ -18,6 +18,7 @@ from manaba.models.ManabaContentPage import ManabaContentPage
 from manaba.models.ManabaCourse import ManabaCourse
 from manaba.models.ManabaCourseLamps import ManabaCourseLamps
 from manaba.models.ManabaCourseNews import ManabaCourseNews
+from manaba.models.ManabaFile import ManabaFile
 from manaba.models.ManabaGradePosition import ManabaGradePosition
 from manaba.models.ManabaPortfolioType import get_portfolio_type
 from manaba.models.ManabaQuery import ManabaQuery
@@ -756,6 +757,7 @@ class Manaba:
 
             deleted = comment_tag.find("div", {"class": "articlecontainer-deleted"}) is not None
 
+            # noinspection PyArgumentList
             comments.append(ManabaThreadComment(
                 course_id,
                 thread_id,
@@ -765,7 +767,6 @@ class Manaba:
                 self.process_datetime(comment_date),
                 reply_to_id,
                 deleted,
-                comment_body.text.strip(),
                 str(comment_body).strip()
             ))
 
@@ -833,7 +834,6 @@ class Manaba:
                 news_posted_at,
                 None,
                 None,
-                None,
                 None
             ))
 
@@ -877,7 +877,7 @@ class Manaba:
         news_posted_at = self.process_datetime(soup.find("span", {"class": "msg-date"}).text.strip())
         msg_text = soup.find("div", {"class": "msg-text"})
 
-        news_text = msg_text.text.replace(" ", " ").strip()
+        # noinspection PyArgumentList
         news_html = str(msg_text).replace(" ", " ").strip()
 
         # last_edit
@@ -906,7 +906,6 @@ class Manaba:
             news_posted_at,
             last_edited_author,
             last_edited_at,
-            news_text,
             news_html
         )
 
@@ -959,14 +958,12 @@ class Manaba:
         return contents
 
     def get_content_pages(self,
-                          course_id: int,
                           content_id: str) -> list[ManabaContentPage]:
         """
         指定したコンテンツ ID のコンテンツページ一覧を取得します。
 
         Args:
-            course_id: 取得するコースのコース ID
-            content_id: 取得するコンテンツのニュース ID
+            content_id: 取得するコンテンツのコンテンツ ID
         """
         if not self.__logged_in:
             raise ManabaNotLoggedIn()
@@ -980,6 +977,9 @@ class Manaba:
 
         if soup.find("div", {"class": "articletext"}) is None:
             raise ManabaNotFound()
+
+        course_link = soup.find("a", {"id": "coursename"}).get("href")
+        course_id: int = int(re.sub(r"course_([0-9]+)", r"\1", course_link))
 
         contents_list = soup.find("ul", {"class": "contentslist"}).find_all("li")
         pages = []
@@ -998,11 +998,112 @@ class Manaba:
                 None,
                 None,
                 None,
-                None,
                 None
             ))
 
         return pages
+
+    def get_content_page(self,
+                         content_id: str,
+                         page_id: int) -> ManabaContentPage:
+        """
+        指定したコンテンツ ID のコンテンツページ詳細を取得します。
+
+        Args:
+            content_id: 取得するコンテンツページのコンテンツ ID
+            page_id: 取得するコンテンツページのコンテンツページ ID
+        """
+        if not self.__logged_in:
+            raise ManabaNotLoggedIn()
+
+        print(urljoin(self.__base_url, "/ct/page_" + str(content_id) + "_" + str(page_id)))
+        response = self.session.get(
+            urljoin(self.__base_url, "/ct/page_" + str(content_id) + "_" + str(page_id)))
+        if response.status_code == 404 or response.status_code == 403:
+            raise ManabaNotFound()
+        response.raise_for_status()
+        soup = BeautifulSoup(response.text, "html5lib")
+
+        if soup.find("div", {"class": "articletext"}) is None:
+            raise ManabaNotFound()
+
+        course_link = soup.find("a", {"id": "coursename"}).get("href")
+        course_id: int = int(re.sub(r"course_([0-9]+)", r"\1", course_link))
+
+        page_title = soup.find("h1", {"class": "pagetitle"}).text.strip()
+
+        pagelimitview = soup.find("div", {"class": "pagelimitview"}).text.strip()
+        publish_start_at = None
+        publish_end_at = None
+        if re.search(
+                r"([0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}) ～ ([0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2})",
+                pagelimitview) is not None:
+            # 開始・終了日時両方ある
+            publish_start_at = self.process_datetime(re.sub(
+                r".*([0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}) ～ ([0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2})",
+                r"\1",
+                pagelimitview))
+            publish_end_at = self.process_datetime(re.sub(
+                r".*([0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}) ～ ([0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2})",
+                r"\2",
+                pagelimitview))
+        elif re.search(r"([0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}) ～", pagelimitview) is not None:
+            # 開始日時だけある
+            publish_start_at = self.process_datetime(re.sub(
+                r".*([0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}) ～",
+                r"\1",
+                pagelimitview))
+        elif re.search(r"～ ([0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2})", pagelimitview) is not None:
+            # 終了日時だけある
+            publish_end_at = self.process_datetime(re.sub(
+                r".*～ ([0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2})",
+                r"\1",
+                pagelimitview))
+
+        article_author = soup.find("div", {"class": "articleauthor"}).text.strip()
+        last_edited_at = self.process_datetime(
+            re.sub(r"([0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}) - (.+)- ([0-9.]+)版", r"\1", article_author))
+        page_author = re.sub(r"([0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}) - (.+)- ([0-9.]+)版", r"\2",
+                             article_author)
+        version = float(
+            re.sub(r"([0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}) - (.+)- ([0-9.]+)版", r"\3", article_author))
+        viewable = soup.find("div", {"class": "pageviewdisabled"}) is None
+        html = None
+        if viewable:
+            article_text = soup.find("div", {"class": "articletext"})
+
+            # noinspection PyArgumentList
+            html = str(article_text).replace(" ", " ").strip()
+
+        manaba_content_page = ManabaContentPage(
+            course_id,
+            content_id,
+            page_id,
+            page_title,
+            page_author,
+            version,
+            viewable,
+            last_edited_at,
+            publish_start_at,
+            publish_end_at,
+            html
+        )
+
+        if viewable:
+            attachments = soup.find_all("div", {"class": "inlineattachment"})
+            for attachment in attachments:
+                a_tag = attachment.find("div", {"class": "inlineaf-description"}).find("a")
+                manaba_content_page.add_file(ManabaFile(
+                    manaba_content_page,
+                    re.sub(r"(.+?) - ([0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2})", r"\1",
+                           a_tag.text).strip(),
+                    self.process_datetime(
+                        re.sub(r"(.+?) - ([0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2})", r"\2",
+                               a_tag.text).strip()),
+                    urljoin(self.__base_url + "/ct/", a_tag.get("href"))
+                ))
+
+        return manaba_content_page
 
     @staticmethod
     def process_datetime(datetime_str: Optional[str]) -> Optional[datetime.datetime]:
