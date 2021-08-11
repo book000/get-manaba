@@ -120,7 +120,7 @@ class Manaba:
             list[ManabaCourse]: 参加しているコース情報
 
         Notes:
-            詳細情報は :func:`manaba.get_course` で取得できます。
+            詳細情報は :func:`manaba.Manaba.get_course` で取得できます。
         """
         if not self.__logged_in:
             raise ManabaNotLoggedIn()
@@ -288,7 +288,7 @@ class Manaba:
             list[ManabaQuery]: コースの小テスト一覧
 
         Notes:
-            詳細情報は :func:`manaba.get_query` で取得できます。
+            詳細情報は :func:`manaba.Manaba.get_query` で取得できます。
         """
         if not self.__logged_in:
             raise ManabaNotLoggedIn()
@@ -419,7 +419,7 @@ class Manaba:
             list[ManabaSurvey]: コースのアンケート一覧
 
         Notes:
-            詳細情報は :func:`manaba.get_survey` で取得できます。
+            詳細情報は :func:`manaba.Manaba.get_survey` で取得できます。
         """
         if not self.__logged_in:
             raise ManabaNotLoggedIn()
@@ -535,7 +535,7 @@ class Manaba:
             list[ManabaReport]: コースのレポート一覧
 
         Notes:
-            詳細情報は :func:`manaba.get_report` で取得できます。
+            詳細情報は :func:`manaba.Manaba.get_report` で取得できます。
         """
         if not self.__logged_in:
             raise ManabaNotLoggedIn()
@@ -660,7 +660,7 @@ class Manaba:
             list[ManabaThread]: コースのスレッド一覧
 
         Notes:
-            詳細情報は :func:`manaba.get_thread` で取得できます。
+            詳細情報は :func:`manaba.Manaba.get_thread` で取得できます。
         """
         if not self.__logged_in:
             raise ManabaNotLoggedIn()
@@ -807,7 +807,7 @@ class Manaba:
             list[ManabaCourseNews]: コースのニュース一覧
 
         Notes:
-            一部の項目のプロパティは None になります。詳細情報は :func:`manaba.get_news` で取得できます。
+            一部の項目のプロパティは None になります。詳細情報は :func:`manaba.Manaba.get_news` で取得できます。
         """
         if not self.__logged_in:
             raise ManabaNotLoggedIn()
@@ -949,7 +949,7 @@ class Manaba:
             list[ManabaContent]: コースのコンテンツ一覧
 
         Notes:
-            一部の項目のプロパティは None になります。詳細情報は :func:`manaba.get_content` で取得できます。
+            一部の項目のプロパティは None になります。詳細情報は :func:`manaba.Manaba.get_content_pages` で取得できます。
         """
         if not self.__logged_in:
             raise ManabaNotLoggedIn()
@@ -992,6 +992,9 @@ class Manaba:
 
         Args:
             content_id: 取得するコンテンツのコンテンツ ID
+
+        Notes:
+            一部の項目のプロパティは None になります。詳細情報は :func:`manaba.Manaba.get_content_page` で取得できます。
         """
         if not self.__logged_in:
             raise ManabaNotLoggedIn()

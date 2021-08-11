@@ -3,3 +3,4 @@ beautifulsoup4~=4.9.3
 mypy~=0.910
 numdoclint==0.1.6
 html5lib==1.1
+setuptools~=57.1.0

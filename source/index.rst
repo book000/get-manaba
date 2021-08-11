@@ -6,6 +6,9 @@ contain the root `toctree` directive.
 get-manaba のドキュメントへようこそ！
 ======================================
 
+.. toctree::
+   :maxdepth: 2
+
 .. automodule:: manaba
    :members:
 
