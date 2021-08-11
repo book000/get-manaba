@@ -12,7 +12,7 @@ class ManabaFile(ManabaModel):
     manaba ファイル
 
     Notes:
-        このモデルは ManabaContentPage・ManabaCourseNews・ManabaThreadComment で使用されます。
+        このモデルは :class:`manaba.models.ManabaContentPage`・:class:`manaba.models.ManabaCourseNews`・:class:`manaba.models.ManabaThreadComment` で使用されます。
     """
 
     def __init__(self,
