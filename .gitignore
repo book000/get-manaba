@@ -5,3 +5,5 @@ tests.json
 *.pyc
 test.py
 get_manaba.egg-info
+docs/
+build/
