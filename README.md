@@ -1,6 +1,6 @@
 # get-manaba
 
-[日本語の README はこちらから](README-ja.md)
+[日本語の README はこちらから](https://github.com/book000/get-manaba/blob/master/README-ja.md)
 
 Library for get various information about [manaba](https://manaba.jp).
 
@@ -21,9 +21,18 @@ Library for get various information about [manaba](https://manaba.jp).
 
 ## Installation
 
+There are two ways to install it, either from PyPI or by cloning the repository.
+
+## Install from PyPI
+
+1. Install get-manaba from PyPI: `pip install -U get-manaba`
+
+## Install from cloning the repository
+
 1. Clone from GitHub repository: `git clone https://github.com/book000/get-manaba.git`
-2. Install the dependency package from `requirements.txt`: `pip3 install -U -r requirements.txt`
+2. Install the dependency package from `requirements.txt`: `pip install -U -r requirements.txt`
+3. Install the get-manaba package: `pip install .`
 
 ## License
 
-The license for this project is [MIT License](LICENSE).
+The license for this project is [MIT License](https://github.com/book000/get-manaba/blob/master/LICENSE).

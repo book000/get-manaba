@@ -21,8 +21,17 @@
 
 ## インストール
 
-1. Github Repository からクローンする: `git clone https://github.com/book000/get-manaba.git`
+PyPI からインストールするか、リポジトリをクローンしてインストールする方法の二つがあります。
+
+### PyPI からインストールする
+
+1. PyPI から get-manaba をインストールする: `pip install -U get-manaba`
+
+## リポジトリをクローンしてインストールする
+
+1. GitHub リポジトリからクローンする: `git clone https://github.com/book000/get-manaba.git`
 2. `requirements.txt` から依存パッケージをインストールする: `pip3 install -U -r requirements.txt`
+3. get-manaba パッケージをインストールする: `pip install .`
 
 ## ライセンス
 
