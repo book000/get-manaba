@@ -131,6 +131,9 @@ class Manaba:
         response.raise_for_status()
         soup = BeautifulSoup(response.text, "html5lib")
 
+        if soup.find("ul", {"class": "infolist-tab"}) is None:
+            raise ManabaInternalError()
+
         correct_list_format_href: str = soup \
             .find("ul", {"class": "infolist-tab"}) \
             .find("li", {"class": "current"}) \
