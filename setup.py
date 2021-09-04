@@ -1,9 +1,9 @@
-from setuptools import setup
+import setuptools
 
-setup(
+setuptools.setup(
     name='get-manaba',
-    version='2.0.0',
-    packages=['manaba'],
+    version='2.0.1',
+    packages=setuptools.find_packages(),
     install_requires=["beautifulsoup4", "requests", "html5lib"],
     url='https://github.com/book000/get-manaba',
     license='MIT',
