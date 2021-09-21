@@ -249,7 +249,7 @@ class Manaba:
             course_link = course_card.find("a").get("href")
             course_id: int = int(re.sub(r"course_([0-9]+)", r"\1", course_link))
 
-            status_lamps = self._get_lamps_from_card(course_card)
+            status_lamps = self._get_lamps_from_card(course_card.find("div", {"class": "coursestatus"}))
 
             courses.append(ManabaCourse(course_name, course_id, None, None, None, status_lamps))
 
