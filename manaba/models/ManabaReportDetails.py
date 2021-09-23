@@ -18,7 +18,7 @@ class ManabaReportDetails(ManabaModel):
 
     def __init__(self,
                  course_id: int,
-                 survey_id: int,
+                 report_id: int,
                  title: str,
                  description: Optional[str],
                  reception_start_time: Optional[datetime.datetime],
@@ -32,7 +32,7 @@ class ManabaReportDetails(ManabaModel):
 
         Args:
             course_id: コース ID
-            survey_id: 小テスト ID
+            report_id: レポート ID
             title: タイトル
             description: 課題に関する説明
             reception_start_time: 受付開始日時
@@ -43,7 +43,7 @@ class ManabaReportDetails(ManabaModel):
             status: 状態
         """
         self._course_id = course_id
-        self._survey_id = survey_id
+        self._report_id = report_id
         self._title = title
         self._description = description
         self._reception_start_time = reception_start_time
@@ -66,14 +66,14 @@ class ManabaReportDetails(ManabaModel):
         return self._course_id
 
     @property
-    def survey_id(self) -> int:
+    def report_id(self) -> int:
         """
         レポート ID
 
         Returns:
             int: レポート ID
         """
-        return self._survey_id
+        return self._report_id
 
     @property
     def title(self) -> str:
