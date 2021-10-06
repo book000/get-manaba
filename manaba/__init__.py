@@ -633,7 +633,9 @@ class Manaba:
         status_value = self._opt_value(details, "状態")
         status = None
         if status_value is not None:
-            if soup.find("table", {"class": "stdlist-report"}).find("span", {"class": "expired"}) is not None:
+            if (soup.find("table", {"class": "stdlist-report"}).find("span", {"class": "expired"}) is not None) or \
+                    (soup.find("div", {"class": "report-form"}) is not None and
+                     soup.find("div", {"class": "report-form"}).find("span", {"class": "expired"}) is not None):
                 status = ManabaTaskStatus(ManabaTaskStatusFlag.CLOSED, ManabaTaskYourStatusFlag.UNSUBMITTED)
             else:
                 status = self._parse_status(status_value)
