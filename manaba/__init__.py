@@ -12,6 +12,7 @@ from urllib.parse import parse_qs, urlencode, urljoin, urlparse
 import bs4.element
 import requests
 from bs4 import BeautifulSoup
+from requests import Response
 
 from manaba.models.ManabaContent import ManabaContent
 from manaba.models.ManabaContentPage import ManabaContentPage
@@ -45,9 +46,10 @@ class Manaba:
 
     def __init__(self,
                  base_url: str) -> None:
-        self.session = requests.Session()
-        self.__base_url = base_url
-        self.__logged_in = False
+        self.session: requests.Session = requests.Session()
+        self.__base_url: str = base_url
+        self.__logged_in: bool = False
+        self.__response: Optional[Response] = None
 
     def login(self,
               username: str,
@@ -62,17 +64,17 @@ class Manaba:
         Returns:
             bool: ログインできたか
         """
-        response = self.session.get(urljoin(self.__base_url, "/ct/login"))
-        if response.status_code != 200:
+        self.__response = self.session.get(urljoin(self.__base_url, "/ct/login"))
+        if self.__response.status_code != 200:
             return False
-        soup = BeautifulSoup(response.text, "html5lib")
+        soup = BeautifulSoup(self.__response.text, "html5lib")
 
         login_form_box = soup.find("div", {"id": "login-form-box"})
         session_value1 = login_form_box.find("input", {"name": "SessionValue1"}).get("value")
         session_value = login_form_box.find("input", {"name": "SessionValue"}).get("value")
         login_value = login_form_box.find("input", {"name": "login"}).get("value")
 
-        response = self.session.post(urljoin(self.__base_url, "/ct/login"), params={
+        self.__response = self.session.post(urljoin(self.__base_url, "/ct/login"), params={
             "userid": username,
             "password": password,
             "login": login_value,
@@ -81,7 +83,7 @@ class Manaba:
             "sessionValue": session_value
         })
 
-        self.__logged_in = response.status_code == 200
+        self.__logged_in = self.__response.status_code == 200
 
         return self.__logged_in
 
@@ -99,11 +101,11 @@ class Manaba:
         if not self.__logged_in:
             raise ManabaNotLoggedIn()
 
-        response = self.session.get(urljoin(self.__base_url, "/ct/course_" + str(course_id)))
-        if response.status_code == 404 or response.status_code == 403:
+        self.__response = self.session.get(urljoin(self.__base_url, "/ct/course_" + str(course_id)))
+        if self.__response.status_code == 404 or self.__response.status_code == 403:
             raise ManabaNotFound()
-        response.raise_for_status()
-        soup = BeautifulSoup(response.text, "html5lib")
+        self.__response.raise_for_status()
+        soup = BeautifulSoup(self.__response.text, "html5lib")
 
         title = soup.find("a", {"id": "coursename"}).text
         teacher = soup.find("span", {"class": "courseteacher"}).text
@@ -125,11 +127,11 @@ class Manaba:
         if not self.__logged_in:
             raise ManabaNotLoggedIn()
 
-        response = self.session.get(urljoin(self.__base_url, "/ct/home_course"))
-        if response.status_code == 404 or response.status_code == 403:
+        self.__response = self.session.get(urljoin(self.__base_url, "/ct/home_course"))
+        if self.__response.status_code == 404 or self.__response.status_code == 403:
             raise ManabaNotFound()
-        response.raise_for_status()
-        soup = BeautifulSoup(response.text, "html5lib")
+        self.__response.raise_for_status()
+        soup = BeautifulSoup(self.__response.text, "html5lib")
 
         if soup.find("ul", {"class": "infolist-tab"}) is None:
             raise ManabaInternalError()
@@ -296,11 +298,11 @@ class Manaba:
         if not self.__logged_in:
             raise ManabaNotLoggedIn()
 
-        response = self.session.get(urljoin(self.__base_url, "/ct/course_" + str(course_id)) + "_query")
-        if response.status_code == 404 or response.status_code == 403:
+        self.__response = self.session.get(urljoin(self.__base_url, "/ct/course_" + str(course_id)) + "_query")
+        if self.__response.status_code == 404 or self.__response.status_code == 403:
             raise ManabaNotFound()
-        response.raise_for_status()
-        soup = BeautifulSoup(response.text, "html5lib")
+        self.__response.raise_for_status()
+        soup = BeautifulSoup(self.__response.text, "html5lib")
         std_list = soup.find("table", {"class": "stdlist"})
         if std_list is None:
             return []
@@ -348,12 +350,12 @@ class Manaba:
         if not self.__logged_in:
             raise ManabaNotLoggedIn()
 
-        response = self.session.get(
+        self.__response = self.session.get(
             urljoin(self.__base_url, "/ct/course_" + str(course_id)) + "_query_" + str(query_id))
-        if response.status_code == 404 or response.status_code == 403:
+        if self.__response.status_code == 404 or self.__response.status_code == 403:
             raise ManabaNotFound()
-        response.raise_for_status()
-        soup = BeautifulSoup(response.text, "html5lib")
+        self.__response.raise_for_status()
+        soup = BeautifulSoup(self.__response.text, "html5lib")
 
         if soup.find("table", {"class": "stdlist-query"}) is None:
             raise ManabaNotFound()
@@ -427,11 +429,11 @@ class Manaba:
         if not self.__logged_in:
             raise ManabaNotLoggedIn()
 
-        response = self.session.get(urljoin(self.__base_url, "/ct/course_" + str(course_id)) + "_survey")
-        if response.status_code == 404 or response.status_code == 403:
+        self.__response = self.session.get(urljoin(self.__base_url, "/ct/course_" + str(course_id)) + "_survey")
+        if self.__response.status_code == 404 or self.__response.status_code == 403:
             raise ManabaNotFound()
-        response.raise_for_status()
-        soup = BeautifulSoup(response.text, "html5lib")
+        self.__response.raise_for_status()
+        soup = BeautifulSoup(self.__response.text, "html5lib")
         std_list = soup.find("table", {"class": "stdlist"})
         if std_list is None:
             return []
@@ -479,12 +481,12 @@ class Manaba:
         if not self.__logged_in:
             raise ManabaNotLoggedIn()
 
-        response = self.session.get(
+        self.__response = self.session.get(
             urljoin(self.__base_url, "/ct/course_" + str(course_id)) + "_survey_" + str(survey_id))
-        if response.status_code == 404 or response.status_code == 403:
+        if self.__response.status_code == 404 or self.__response.status_code == 403:
             raise ManabaNotFound()
-        response.raise_for_status()
-        soup = BeautifulSoup(response.text, "html5lib")
+        self.__response.raise_for_status()
+        soup = BeautifulSoup(self.__response.text, "html5lib")
 
         if soup.find("table", {"class": "stdlist-query"}) is None:
             raise ManabaNotFound()
@@ -543,11 +545,11 @@ class Manaba:
         if not self.__logged_in:
             raise ManabaNotLoggedIn()
 
-        response = self.session.get(urljoin(self.__base_url, "/ct/course_" + str(course_id)) + "_report")
-        if response.status_code == 404 or response.status_code == 403:
+        self.__response = self.session.get(urljoin(self.__base_url, "/ct/course_" + str(course_id)) + "_report")
+        if self.__response.status_code == 404 or self.__response.status_code == 403:
             raise ManabaNotFound()
-        response.raise_for_status()
-        soup = BeautifulSoup(response.text, "html5lib")
+        self.__response.raise_for_status()
+        soup = BeautifulSoup(self.__response.text, "html5lib")
         std_list = soup.find("table", {"class": "stdlist"})
         if std_list is None:
             return []
@@ -594,12 +596,12 @@ class Manaba:
         if not self.__logged_in:
             raise ManabaNotLoggedIn()
 
-        response = self.session.get(
+        self.__response = self.session.get(
             urljoin(self.__base_url, "/ct/course_" + str(course_id)) + "_report_" + str(report_id))
-        if response.status_code == 404 or response.status_code == 403:
+        if self.__response.status_code == 404 or self.__response.status_code == 403:
             raise ManabaNotFound()
-        response.raise_for_status()
-        soup = BeautifulSoup(response.text, "html5lib")
+        self.__response.raise_for_status()
+        soup = BeautifulSoup(self.__response.text, "html5lib")
 
         if soup.find("table", {"class": "stdlist-report"}) is None:
             raise ManabaNotFound()
@@ -670,12 +672,12 @@ class Manaba:
         if not self.__logged_in:
             raise ManabaNotLoggedIn()
 
-        response = self.session.get(
+        self.__response = self.session.get(
             urljoin(self.__base_url, "/ct/course_" + str(course_id)) + "_topics")
-        if response.status_code == 404 or response.status_code == 403:
+        if self.__response.status_code == 404 or self.__response.status_code == 403:
             raise ManabaNotFound()
-        response.raise_for_status()
-        soup = BeautifulSoup(response.text, "html5lib")
+        self.__response.raise_for_status()
+        soup = BeautifulSoup(self.__response.text, "html5lib")
 
         std_list = soup.find("table", {"class": "stdlist"})
         if std_list is None:
@@ -726,13 +728,13 @@ class Manaba:
         if start_id is not None:
             params["start_id"] = start_id
 
-        response = self.session.get(
+        self.__response = self.session.get(
             urljoin(self.__base_url, "/ct/course_" + str(course_id)) + "_topics_" + str(
                 thread_id) + "_tflat?" + urlencode(params))
-        if response.status_code == 404 or response.status_code == 403:
+        if self.__response.status_code == 404 or self.__response.status_code == 403:
             raise ManabaNotFound()
-        response.raise_for_status()
-        soup = BeautifulSoup(response.text, "html5lib")
+        self.__response.raise_for_status()
+        soup = BeautifulSoup(self.__response.text, "html5lib")
 
         comments: list[ManabaThreadComment] = []
         comment_tags = soup.find_all("div", {"class": "articlecontainer"})
@@ -823,12 +825,12 @@ class Manaba:
         if start_id is not None:
             params["start_id"] = start_id
 
-        response = self.session.get(
+        self.__response = self.session.get(
             urljoin(self.__base_url, "/ct/course_" + str(course_id)) + "_news?" + urlencode(params))
-        if response.status_code == 404 or response.status_code == 403:
+        if self.__response.status_code == 404 or self.__response.status_code == 403:
             raise ManabaNotFound()
-        response.raise_for_status()
-        soup = BeautifulSoup(response.text, "html5lib")
+        self.__response.raise_for_status()
+        soup = BeautifulSoup(self.__response.text, "html5lib")
 
         std_list = soup.find("table", {"class": "stdlist"})
         if std_list is None:
@@ -871,12 +873,12 @@ class Manaba:
         if not self.__logged_in:
             raise ManabaNotLoggedIn()
 
-        response = self.session.get(
+        self.__response = self.session.get(
             urljoin(self.__base_url, "/ct/course_" + str(course_id)) + "_news_" + str(news_id))
-        if response.status_code == 404 or response.status_code == 403:
+        if self.__response.status_code == 404 or self.__response.status_code == 403:
             raise ManabaNotFound()
-        response.raise_for_status()
-        soup = BeautifulSoup(response.text, "html5lib")
+        self.__response.raise_for_status()
+        soup = BeautifulSoup(self.__response.text, "html5lib")
 
         if soup.find("h2", {"class": "msg-subject"}) is None:
             raise ManabaNotFound()
@@ -959,12 +961,12 @@ class Manaba:
         if not self.__logged_in:
             raise ManabaNotLoggedIn()
 
-        response = self.session.get(
+        self.__response = self.session.get(
             urljoin(self.__base_url, "/ct/course_" + str(course_id)) + "_page")
-        if response.status_code == 404 or response.status_code == 403:
+        if self.__response.status_code == 404 or self.__response.status_code == 403:
             raise ManabaNotFound()
-        response.raise_for_status()
-        soup = BeautifulSoup(response.text, "html5lib")
+        self.__response.raise_for_status()
+        soup = BeautifulSoup(self.__response.text, "html5lib")
 
         contents_list = soup.find("table", {"class": "contentslist"})
         if contents_list is None:
@@ -1004,12 +1006,12 @@ class Manaba:
         if not self.__logged_in:
             raise ManabaNotLoggedIn()
 
-        response = self.session.get(
+        self.__response = self.session.get(
             urljoin(self.__base_url, "/ct/page_" + str(content_id)))
-        if response.status_code == 404 or response.status_code == 403:
+        if self.__response.status_code == 404 or self.__response.status_code == 403:
             raise ManabaNotFound()
-        response.raise_for_status()
-        soup = BeautifulSoup(response.text, "html5lib")
+        self.__response.raise_for_status()
+        soup = BeautifulSoup(self.__response.text, "html5lib")
 
         if soup.find("div", {"class": "articletext"}) is None:
             raise ManabaNotFound()
@@ -1053,12 +1055,12 @@ class Manaba:
             raise ManabaNotLoggedIn()
 
         print(urljoin(self.__base_url, "/ct/page_" + str(content_id) + "_" + str(page_id)))
-        response = self.session.get(
+        self.__response = self.session.get(
             urljoin(self.__base_url, "/ct/page_" + str(content_id) + "_" + str(page_id)))
-        if response.status_code == 404 or response.status_code == 403:
+        if self.__response.status_code == 404 or self.__response.status_code == 403:
             raise ManabaNotFound()
-        response.raise_for_status()
-        soup = BeautifulSoup(response.text, "html5lib")
+        self.__response.raise_for_status()
+        soup = BeautifulSoup(self.__response.text, "html5lib")
 
         if soup.find("div", {"class": "articletext"}) is None:
             raise ManabaNotFound()
@@ -1139,6 +1141,15 @@ class Manaba:
                 ))
 
         return manaba_content_page
+
+    def get_latest_response(self) -> Optional[Response]:
+        """
+        最後のレスポンスを返します。デバッグのために利用することを想定しています。
+
+        Returns:
+            Optional[Response]: レスポンス (ない場合は None)
+        """
+        return self.__response
 
     @staticmethod
     def process_datetime(datetime_str: Optional[str]) -> Optional[datetime.datetime]:
