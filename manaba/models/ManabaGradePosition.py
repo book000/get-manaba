@@ -48,3 +48,7 @@ class ManabaGradePosition(ManabaModel):
             int: 自分より上の成績割合
         """
         return self._above_percent
+
+    def __str__(self) -> str:
+        return "ManabaGradePosition{below_percent=%s,my_pos_percent=%s,above_percent=%s}" % (
+            self._below_percent, self._my_pos_percent, self._above_percent)

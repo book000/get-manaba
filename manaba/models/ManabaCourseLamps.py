@@ -70,3 +70,7 @@ class ManabaCourseLamps(ManabaModel):
             bool: 個人ランプが点いているか
         """
         return self._individual
+
+    def __str__(self) -> str:
+        return "ManabaCourseLamps{news=%s,deadline=%s,grad=%s,thread=%s,individual=%s}" % (
+            self._news, self._deadline, self._grad, self._thread, self._individual)

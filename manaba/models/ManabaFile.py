@@ -74,3 +74,7 @@ class ManabaFile(ManabaModel):
             str: ファイルダウンロード URL
         """
         return self._download_url
+
+    def __str__(self) -> str:
+        return "ManabaFile{parent=%s,name=%s,uploaded_at=%s,download_url=%s}" % (
+            self._parent, self._name, self.uploaded_at, self._download_url)

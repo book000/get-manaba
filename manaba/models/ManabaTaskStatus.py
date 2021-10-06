@@ -20,6 +20,9 @@ class ManabaTaskStatus(ManabaModel):
         self._task_status = task_status
         self._your_status = your_status
 
+    def __str__(self) -> str:
+        return "ManabaTaskStatus{task_status=%s,your_status=%s}" % (self._task_status, self._your_status)
+
     @property
     def task_status(self) -> ManabaTaskStatusFlag:
         """

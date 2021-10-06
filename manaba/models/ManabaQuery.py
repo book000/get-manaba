@@ -113,3 +113,8 @@ class ManabaQuery(ManabaModel):
             Optional[datetime.datetime]: 受付終了日時
         """
         return self._reception_end_time
+
+    def __str__(self) -> str:
+        return "ManabaQuery{course_id=%s,query_id=%s,title=%s,status=%s,reception_start_time=%s,reception_end_time=%s}" % (
+            self._course_id, self._query_id, self._title, self._status, self._reception_start_time,
+            self._reception_end_time)

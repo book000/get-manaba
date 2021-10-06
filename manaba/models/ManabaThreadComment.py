@@ -171,3 +171,8 @@ class ManabaThreadComment(ManabaModel):
             この項目は、取得できない もしくは 存在しなかった としても空のリストになります。
         """
         return self._files
+
+    def __str__(self) -> str:
+        return "ManabaThreadComment{course_id=%s,thread_id=%s,comment_id=%s,title=%s,author=%s,posted_at=%s,reply_to_id=%s,deleted=%s}" % (
+            self._course_id, self._thread_id, self._comment_id, self._title, self._author, self._posted_at,
+            self._reply_to_id, self._deleted)

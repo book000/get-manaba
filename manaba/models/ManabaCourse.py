@@ -104,3 +104,7 @@ class ManabaCourse(ManabaModel):
             コース一覧にて曜日表示を利用している場合、この項目は None になる可能性があります。
         """
         return self._status_lamps
+
+    def __str__(self) -> str:
+        return "ManabaCourse{course_id=%s,name=%s,year=%s,teacher=%s}" % (
+            self._course_id, self._name, self._year, self._teacher)

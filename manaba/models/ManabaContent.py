@@ -98,3 +98,6 @@ class ManabaContent(ManabaModel):
             Optional[list[ManabaContentPage]]: コンテンツ内のページ
         """
         return self._pages
+
+    def __str__(self) -> str:
+        return "ManabaContent{course_id=%s,content_id=%s,title=%s}" % (self._course_id, self._content_id, self._title)

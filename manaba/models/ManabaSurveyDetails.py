@@ -127,3 +127,8 @@ class ManabaSurveyDetails(ManabaModel):
             Optional[ManabaTaskStatus]: 状態
         """
         return self._status
+
+    def __str__(self) -> str:
+        return "ManabaSurveyDetails{course_id=%s,survey_id=%s,title=%s,reception_start_time=%s,reception_end_time=%s,portfolio_type=%s,student_resubmit_type=%s,status=%s}" % (
+            self._course_id, self._survey_id, self._title, self._reception_start_time, self._reception_end_time,
+            self._portfolio_type, self._student_resubmit_type, self._status)

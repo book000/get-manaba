@@ -210,3 +210,7 @@ class ManabaContentPage(ManabaModel):
             この項目は、取得できない もしくは 存在しなかった としても空のリストになります。
         """
         return self._files
+
+    def __str__(self) -> str:
+        return "ManabaContentPage{course_id=%s,content_id=%s,page_id=%s,title=%s,author=%s,version=%s}" % (
+            self._course_id, self._content_id, self._page_id, self._title, self._author, self._version)

@@ -149,3 +149,8 @@ class ManabaCourseNews(ManabaModel):
             この項目は、取得できない もしくは 存在しなかった としても空のリストになります。
         """
         return self._files
+
+    def __str__(self) -> str:
+        return "ManabaCourseNews{course_id=%s,news_id=%s,title=%s,author=%s,posted_at=%s,last_edited_author=%s,last_edited_at=%s,}" % (
+            self._course_id, self._news_id, self._title, self._author, self._posted_at, self._last_edited_author,
+            self._last_edited_at)

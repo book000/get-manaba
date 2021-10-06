@@ -20,6 +20,9 @@ class ManabaTaskYourStatusFlag(Enum):
         self._id = _id
         self.showing_name = showing_name
 
+    def __str__(self) -> str:
+        return "ManabaTaskYourStatusFlag{id=%s,showing_name=%s}" % (self._id, self.showing_name)
+
 
 def get_your_status_from_name(name: Optional[str]) -> Optional[ManabaTaskYourStatusFlag]:
     """

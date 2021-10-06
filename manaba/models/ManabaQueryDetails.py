@@ -168,3 +168,9 @@ class ManabaQueryDetails(ManabaModel):
             ManabaGradePosition: 成績のポジション
         """
         return self._position
+
+    def __str__(self) -> str:
+        return "ManabaQueryDetails{course_id=%s,query_id=%s,title=%s,description=%s,reception_start_time=%s,reception_end_time=%s,portfolio_type=%s,result_view_type=%s,status=%s,grade=%s,position=%s}" % (
+            self._course_id, self._query_id, self._title, self._description, self._reception_start_time,
+            self._reception_end_time, self._portfolio_type, self._result_view_type, self._status, self._grade,
+            self._position)

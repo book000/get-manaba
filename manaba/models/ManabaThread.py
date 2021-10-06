@@ -76,3 +76,7 @@ class ManabaThread(ManabaModel):
             取得するには、 Manaba.get_thread メソッドを使用してください。
         """
         return self._comments
+
+    def __str__(self) -> str:
+        return "ManabaThread{course_id=%s,thread_id=%s,title=%s,comments=%s}" % (
+            self._course_id, self._thread_id, self._title, self._comments)

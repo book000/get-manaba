@@ -113,3 +113,8 @@ class ManabaSurvey(ManabaModel):
             Optional[datetime.datetime]: 終了日時
         """
         return self._reception_end_time
+
+    def __str__(self) -> str:
+        return "ManabaSurvey{course_id=%s,survey_id=%s,title=%s,status=%s,status_lamp=%s,reception_start_time=%s,reception_end_time=%s}" % (
+            self._course_id, self._survey_id, self._title, self._status, self._status_lamp, self._reception_start_time,
+            self._reception_end_time)
