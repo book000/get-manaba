@@ -473,7 +473,7 @@ class TestManaba(TestCase):
                   "page_id:" + str(page_id))
 
             author = test["author"]
-            version: float = test["version"]
+            version: str = test["version"]
             viewable: bool = test["viewable"]
             last_edited_at = Manaba.process_datetime(test["last_edited_at"])
             publish_start_at = Manaba.process_datetime(test["publish_start_at"])

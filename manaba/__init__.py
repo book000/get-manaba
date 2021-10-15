@@ -1103,8 +1103,7 @@ class Manaba:
             re.sub(r"([0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}) - (.+)- ([0-9.]+)版", r"\1", article_author))
         page_author = re.sub(r"([0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}) - (.+)- ([0-9.]+)版", r"\2",
                              article_author)
-        version = float(
-            re.sub(r"([0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}) - (.+)- ([0-9.]+)版", r"\3", article_author))
+        version = re.sub(r"([0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}) - (.+)- ([0-9.]+)版", r"\3", article_author)
         viewable = soup.find("div", {"class": "pageviewdisabled"}) is None
         html = None
         if viewable:

@@ -19,7 +19,7 @@ class ManabaContentPage(ManabaModel):
                  page_id: int,
                  title: str,
                  author: Optional[str],
-                 version: Optional[float],
+                 version: Optional[str],
                  viewable: Optional[bool],
                  last_edited_at: Optional[datetime.datetime],
                  publish_start_at: Optional[datetime.datetime],
@@ -119,12 +119,12 @@ class ManabaContentPage(ManabaModel):
         return self._author
 
     @property
-    def version(self) -> Optional[float]:
+    def version(self) -> Optional[str]:
         """
         ページバージョン（版）
 
         Returns:
-            Optional[float]: ページバージョン（版）
+            Optional[str]: ページバージョン（版）
 
         Notes:
             Manaba.get_content_pages で取得した場合、この項目は None になります。Manaba.get_content_page でページ詳細情報を取得してください。
