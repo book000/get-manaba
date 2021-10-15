@@ -911,7 +911,6 @@ class Manaba:
                     str(last_modified.find("a").next_sibling.string).strip()
                 )
             else:
-                # 最終更新 <a onclick="return manaba.userballoon('97279', event);" href="user_97279_profile">中山　智美</a> 2021-08-04  10:25
                 last_edited_str = last_modified.text.strip()
                 last_edited_author = re.sub(r"最終更新 (.+) ([0-9]{4}-[0-9]{2}-[0-9]{2} +[0-9]{2}:[0-9]{2})", r"\1",
                                             last_edited_str)
