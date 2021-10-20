@@ -1210,8 +1210,10 @@ class Manaba:
 
             your_status = get_your_status(statuses[1].strip())
             if your_status is None:
-                raise ManabaInternalError(
-                    "your_status return None (" + statuses[1].strip() + ")")
+                your_status = get_your_status(statuses[2].strip())
+                if your_status is None:
+                    raise ManabaInternalError(
+                        "your_status return None (" + statuses[1].strip() + " | " + statuses[2].strip() + ")")
 
             return ManabaTaskStatus(task_status, your_status)
 
