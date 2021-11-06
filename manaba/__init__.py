@@ -1208,12 +1208,15 @@ class Manaba:
                 raise ManabaInternalError(
                     "get_task_status return None (" + statuses[0].strip() + ")")
 
-            your_status = get_your_status(statuses[1].strip())
-            if your_status is None:
-                your_status = get_your_status(statuses[2].strip())
+            if "まだ提出は可能です" in statuses[1]:  # 未提出 & ※遅延として取り扱われますが、まだ提出は可能です。
+                your_status = ManabaTaskYourStatusFlag.UNSUBMITTED
+            else:
+                your_status = get_your_status(statuses[1].strip())
                 if your_status is None:
-                    raise ManabaInternalError(
-                        "your_status return None (" + statuses[1].strip() + " | " + statuses[2].strip() + ")")
+                    your_status = get_your_status(statuses[2].strip())
+                    if your_status is None:
+                        raise ManabaInternalError(
+                            "your_status return None (" + statuses[1].strip() + " | " + statuses[2].strip() + ")")
 
             return ManabaTaskStatus(task_status, your_status)
 
