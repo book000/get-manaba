@@ -4,6 +4,11 @@
 
 Library for get various information about [manaba](https://manaba.jp).
 
+## Announcement
+
+- This library is mainly designed to operate the service in the developer's university. Please note that it may not work well for other universities.
+- The university to which the developer of this library belongs will no longer be using manaba since 2022. As a result, support for this library will be discontinued and it will be archived as of April 2022.
+
 ## Warning / Disclaimer
 
 - **The developer assumes no responsibility for any problems resulting from the use of this project and library. Use at your own risk.**
