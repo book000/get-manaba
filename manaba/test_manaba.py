@@ -31,6 +31,8 @@ class TestManaba(TestCase):
         self.base_url = self.config["base_url"]
         self.manaba = Manaba(self.base_url)
 
+        self.assertFalse(self.manaba.login("XXXXXXXX", "XXXXXXXX"), "ログインに失敗するべきなのに失敗しませんでした。")
+
         username = self.config["username"]
         password = self.config["password"]
 
