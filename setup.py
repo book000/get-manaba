@@ -2,7 +2,7 @@ import setuptools
 
 setuptools.setup(
     name='get-manaba',
-    version='2.0.8',
+    version='2.0.9',
     packages=setuptools.find_packages(),
     install_requires=["beautifulsoup4", "requests", "html5lib"],
     url='https://github.com/book000/get-manaba',
