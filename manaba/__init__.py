@@ -83,7 +83,7 @@ class Manaba:
             "sessionValue": session_value
         })
 
-        self.__logged_in = self.__response.status_code == 200
+        self.__logged_in = self.__response.history[0].status_code == 302
 
         return self.__logged_in
 
