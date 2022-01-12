@@ -13,6 +13,7 @@ class ManabaTaskYourStatusFlag(Enum):
     WAITING = (auto(), None)
     UNSUBMITTED = (auto(), "未提出", "まだ提出していません")
     SUBMITTED = (auto(), "提出済み")
+    PASSED = (auto(), "合格済み")
 
     def __init__(self,
                  _id: int,
