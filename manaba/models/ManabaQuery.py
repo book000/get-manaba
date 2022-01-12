@@ -21,7 +21,8 @@ class ManabaQuery(ManabaModel):
                  status: ManabaTaskStatus,
                  status_lamp: bool,
                  reception_start_time: Optional[datetime.datetime],
-                 reception_end_time: Optional[datetime.datetime]):
+                 reception_end_time: Optional[datetime.datetime],
+                 is_drill: bool):
         """
         manaba 小テスト
 
@@ -33,6 +34,7 @@ class ManabaQuery(ManabaModel):
             status_lamp: ステータスランプ
             reception_start_time: 受付開始日時
             reception_end_time: 受付終了日時
+            is_drill: ドリルかどうか
         """
         self._course_id = course_id
         self._query_id = query_id
@@ -41,6 +43,7 @@ class ManabaQuery(ManabaModel):
         self._status_lamp = status_lamp
         self._reception_start_time = reception_start_time
         self._reception_end_time = reception_end_time
+        self._is_drill = is_drill
 
     @property
     def course_id(self) -> int:
@@ -114,7 +117,17 @@ class ManabaQuery(ManabaModel):
         """
         return self._reception_end_time
 
+    @property
+    def is_drill(self) -> Optional[bool]:
+        """
+        ドリルかどうか
+
+        Returns:
+            Optional[bool]: ドリルかどうか
+        """
+        return self._is_drill
+
     def __str__(self) -> str:
-        return "ManabaQuery{course_id=%s,query_id=%s,title=%s,status=%s,reception_start_time=%s,reception_end_time=%s}" % (
+        return "ManabaQuery{course_id=%s,query_id=%s,title=%s,status=%s,reception_start_time=%s,reception_end_time=%s,is_drill=%s}" % (
             self._course_id, self._query_id, self._title, self._status, self._reception_start_time,
-            self._reception_end_time)
+            self._reception_end_time, self._is_drill)

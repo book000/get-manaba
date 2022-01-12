@@ -314,7 +314,8 @@ class Manaba:
             query_title = query_tag.find("h3").text.strip()
             query_status_lamp = query_tag.find("h3").find("img").get("src").endswith("on.png")
             query_link = query_tag.find("h3").find("a").get("href")
-            query_id: int = int(re.sub(r"course_[0-9]+_query_([0-9]+)", r"\1", query_link))
+            query_id: int = int(re.sub(r"course_[0-9]+_(?:query|drill)_([0-9]+)", r"\1", query_link))
+            query_is_drill = "drill" in query_link
 
             query_status = self._parse_status(query_td_tags[1].text.strip())
 
@@ -328,7 +329,8 @@ class Manaba:
                 query_status,
                 query_status_lamp,
                 query_start_time,
-                query_end_time
+                query_end_time,
+                query_is_drill
             ))
 
         return querys
