@@ -20,7 +20,7 @@
 
 ## 要件
 
-- manaba (Tested with `manaba 2.96`)
+- manaba (Tested with `manaba 2.97`)
 - Python 3.9+
 - [requirements.txt](requirements.txt): `requests`, `beautifulsoup4`
 
