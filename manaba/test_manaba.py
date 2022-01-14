@@ -1,9 +1,11 @@
 import json
 import os
+from typing import Optional
 from unittest import TestCase
 
 import manaba
 from manaba import Manaba
+from manaba.models.ManabaAnswerViewType import get_answer_view_type_from_name
 from manaba.models.ManabaFile import ManabaFile
 from manaba.models.ManabaPortfolioType import get_portfolio_type_from_name
 from manaba.models.ManabaResultViewType import get_result_view_type_from_name
@@ -176,6 +178,51 @@ class TestManaba(TestCase):
             self.assertEqual(below_percent, query.position.below_percent, "成績ポジションにおける自身より下の点数の割合が一致しません。")
             self.assertEqual(my_pos_percent, query.position.my_pos_percent, "成績ポジションにおける自身と同じ点数の割合が一致しません。")
             self.assertEqual(above_percent, query.position.above_percent, "成績ポジションにおける自身より上の点数の割合が一致しません。")
+
+    def test_get_drill(self) -> None:
+        if "test_get_drill" not in self.tests:
+            self.fail("コンフィグにこのテスト用のテストデータがないため、失敗しました。")
+
+        self.assertRaises(manaba.ManabaNotFound, self.manaba.get_query,
+                          self.tests["test_get_drill"][0]["course_id"], 0)
+
+        for test in self.tests["test_get_drill"]:
+            course_id: int = test["course_id"]
+            drill_id: int = test["drill_id"]
+            drill_title = test["drill_title"]
+            print("drill_title:" + drill_title, "course_id:" + str(course_id), "drill_id:" + str(drill_id))
+
+            description = test["description"]
+            reception_start_time = Manaba.process_datetime(test["reception_start_time"])
+            self.assertNotEqual(None, reception_start_time, "テストデータとして渡された reception_start_time が正しくありません。")
+            reception_end_time = Manaba.process_datetime(test["reception_end_time"])
+            self.assertNotEqual(None, reception_end_time, "テストデータとして渡された reception_end_time が正しくありません。")
+            submission_limit: Optional[int] = test["submission_limit"]
+            portfolio_type = get_portfolio_type_from_name(test["portfolio_type"])
+            answer_view_type = get_answer_view_type_from_name(test["answer_view_type"])
+            task_status = get_task_status_from_name(test["status"]["task_status"])
+            self.assertNotEqual(None, task_status, "テストデータとして渡された task_status が正しくありません。")
+            your_status = get_your_status_from_name(test["status"]["your_status"])
+            self.assertNotEqual(None, your_status, "テストデータとして渡された task_status が正しくありません。")
+            count_exams: Optional[int] = test["count_exams"]
+            max_score: Optional[int] = test["max_score"]
+            passing_conditions: Optional[int] = test["passing_conditions"]
+
+            drill = self.manaba.get_drill(course_id, drill_id)
+            self.assertEqual(drill_title, drill.title, "課題タイトルが一致しません。")
+            self.assertEqual(description, drill.description, "課題説明が一致しません。")
+            self.assertEqual(reception_start_time, drill.reception_start_time, "受付開始時刻が一致しません。")
+            self.assertEqual(reception_end_time, drill.reception_end_time, "受付終了時刻が一致しません。")
+            self.assertEqual(submission_limit, drill.submission_limit, "提出上限が一致しません。")
+            self.assertEqual(portfolio_type, drill.portfolio_type, "ポートフォリオ種別が一致しません。")
+            self.assertEqual(answer_view_type, drill.answer_view_type, "正解の公開が一致しません。")
+            self.assertNotEqual(None, drill.status, "課題の状態を取得できませんでした。")
+            assert drill.status is not None
+            self.assertEqual(task_status, drill.status.task_status, "課題の状態が一致しません。")
+            self.assertEqual(your_status, drill.status.your_status, "課題の提出状態が一致しません。")
+            self.assertEqual(count_exams, drill.count_exams, "受験回数が一致しません。")
+            self.assertEqual(max_score, drill.max_score, "最高得点が一致しません。")
+            self.assertEqual(passing_conditions, drill.passing_conditions, "合格条件が一致しません。")
 
     def test_get_surveys(self) -> None:
         if "test_get_surveys" not in self.tests:

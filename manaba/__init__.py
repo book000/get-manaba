@@ -14,11 +14,13 @@ import requests
 from bs4 import BeautifulSoup
 from requests import Response
 
+from manaba.models.ManabaAnswerViewType import get_answer_view_type
 from manaba.models.ManabaContent import ManabaContent
 from manaba.models.ManabaContentPage import ManabaContentPage
 from manaba.models.ManabaCourse import ManabaCourse
 from manaba.models.ManabaCourseLamps import ManabaCourseLamps
 from manaba.models.ManabaCourseNews import ManabaCourseNews
+from manaba.models.ManabaDrillDetails import ManabaDrillDetails
 from manaba.models.ManabaFile import ManabaFile
 from manaba.models.ManabaGradePosition import ManabaGradePosition
 from manaba.models.ManabaPortfolioType import get_portfolio_type
@@ -412,6 +414,96 @@ class Manaba:
             status,
             grade,
             position
+        )
+
+    def get_drill(self,
+                  course_id: int,
+                  drill_id: int) -> ManabaDrillDetails:
+        """
+        指定したコース・小テスト ID の小テスト詳細情報を取得します。
+
+        Args:
+            course_id: 取得する小テストドリルのコース ID
+            drill_id: 取得する小テストドリルの小テスト ID
+
+        Returns:
+            ManabaDrillDetails: 小テストドリル詳細情報
+        """
+
+        if not self.__logged_in:
+            raise ManabaNotLoggedIn()
+
+        self.__response = self.session.get(
+            urljoin(self.__base_url, "/ct/course_" + str(course_id)) + "_drill_" + str(drill_id))
+        if self.__response.status_code == 404 or self.__response.status_code == 403:
+            raise ManabaNotFound()
+        self.__response.raise_for_status()
+        soup = BeautifulSoup(self.__response.text, "html5lib")
+
+        if soup.find("table", {"class": "stdlist-query"}) is None:
+            raise ManabaNotFound()
+
+        query_title = soup.find("tr", {"class": "title"}).text.strip()
+
+        details = {}
+        detail_trs = soup.find("table", {"class": "stdlist-query"}).find_all("tr")
+        for tr in detail_trs:
+            if tr.get("class") == "title":
+                continue
+
+            th = tr.find("th")
+            td = tr.find("td")
+            if th is None or td is None:
+                continue
+
+            details[th.text.strip()] = td.text.strip()
+
+        portfolio_type = get_portfolio_type(self._opt_value(details, "ポートフォリオ"))
+
+        status_value = self._opt_value(details, "状態")
+        status = None
+        if status_value is not None:
+            if soup.find("table", {"class": "stdlist-query"}).find("span", {"class": "expired"}) is not None:
+                status = ManabaTaskStatus(ManabaTaskStatusFlag.CLOSED, ManabaTaskYourStatusFlag.UNSUBMITTED)
+            else:
+                status = self._parse_status(status_value)
+                if status.your_status is None:
+                    # 受付中で未回答の場合、your_statusはNoneになる
+                    status = ManabaTaskStatus(status.task_status, ManabaTaskYourStatusFlag.UNSUBMITTED)
+
+        submission_limit = -1
+        if self._opt_value(details, "提出上限") != "無制限":
+            submission_limit = self._opt_value(details, "提出上限")
+
+        answer_view_type = get_answer_view_type(self._opt_value(details, "正解の公開"))
+
+        match = re.search(r"受験回数: ([0-9]+)回(?:\n|.)*?\(最高得点 ([0-9]+)\)", self._opt_value(details, "状態"))
+        count_exams = None
+        max_score = None
+        if match is not None:
+            count_exams = int(match.group(1))
+            max_score = int(match.group(2))
+
+        raw_passing_conditions = re.sub(r"([0-9]+).*", r"\1", self._opt_value(details, "合格条件"))
+        if raw_passing_conditions.isdigit():
+            passing_conditions = int(raw_passing_conditions)
+        else:
+            passing_conditions = -1
+
+        return ManabaDrillDetails(
+            course_id,
+            drill_id,
+            query_title,
+            self._opt_value(details, "課題に関する説明"),
+            self.process_datetime(self._opt_value(details, "受付開始日時")),
+            self.process_datetime(self._opt_value(details, "受付終了日時")),
+            submission_limit,
+            portfolio_type,
+            answer_view_type,
+            status,
+            count_exams,
+            max_score,
+            passing_conditions
         )
 
     def get_surveys(self,
