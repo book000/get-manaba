@@ -19,14 +19,14 @@ class ManabaDrillDetails(ManabaModel):
                  course_id: int,
                  drill_id: int,
                  title: str,
-                 description: str,
+                 description: Optional[str],
                  reception_start_time: Optional[datetime.datetime],
                  reception_end_time: Optional[datetime.datetime],
                  submission_limit: int,
                  portfolio_type: Optional[ManabaPortfolioType],
-                 answer_view_type: ManabaAnswerViewType,
+                 answer_view_type: Optional[ManabaAnswerViewType],
                  status: Optional[ManabaTaskStatus],
-                 count_exams: int,
+                 count_exams: Optional[int],
                  max_score: Optional[int],
                  passing_conditions: Optional[int]):
         """
@@ -92,12 +92,12 @@ class ManabaDrillDetails(ManabaModel):
         return self._title
 
     @property
-    def description(self) -> str:
+    def description(self) -> Optional[str]:
         """
         課題に関する説明
 
         Returns:
-            str: 課題に関する説明
+            Optional[str]: 課題に関する説明
         """
         return self._description
 
@@ -142,12 +142,12 @@ class ManabaDrillDetails(ManabaModel):
         return self._portfolio_type
 
     @property
-    def answer_view_type(self) -> ManabaAnswerViewType:
+    def answer_view_type(self) -> Optional[ManabaAnswerViewType]:
         """
         正解の公開
 
         Returns:
-            bool: 正解の公開
+            Optional[ManabaAnswerViewType]: 正解の公開
         """
         return self._answer_view_type
 
@@ -162,12 +162,12 @@ class ManabaDrillDetails(ManabaModel):
         return self._status
 
     @property
-    def count_exams(self) -> int:
+    def count_exams(self) -> Optional[int]:
         """
         受験回数
 
         Returns:
-            int: 受験回数
+            Optional[int]:: 受験回数
         """
         return self._count_exams
 

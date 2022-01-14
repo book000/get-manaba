@@ -472,23 +472,28 @@ class Manaba:
                     status = ManabaTaskStatus(status.task_status, ManabaTaskYourStatusFlag.UNSUBMITTED)
 
         submission_limit = -1
-        if self._opt_value(details, "提出上限") != "無制限":
-            submission_limit = self._opt_value(details, "提出上限")
+        raw_submission_limit = self._opt_value(details, "提出上限")
+        if raw_submission_limit is not None:
+            match = re.search(r"([0-9]+)回まで", raw_submission_limit)
+            if match is not None:
+                submission_limit = int(match.group(1))
 
         answer_view_type = get_answer_view_type(self._opt_value(details, "正解の公開"))
 
-        match = re.search(r"受験回数: ([0-9]+)回(?:\n|.)*?\(最高得点 ([0-9]+)\)", self._opt_value(details, "状態"))
         count_exams = None
         max_score = None
-        if match is not None:
-            count_exams = int(match.group(1))
-            max_score = int(match.group(2))
+        if status_value is not None:
+            match = re.search(r"受験回数: ([0-9]+)回(?:\n|.)*?\(最高得点 ([0-9]+)\)", status_value)
+            if match is not None:
+                count_exams = int(match.group(1))
+                max_score = int(match.group(2))
 
-        raw_passing_conditions = re.sub(r"([0-9]+).*", r"\1", self._opt_value(details, "合格条件"))
-        if raw_passing_conditions.isdigit():
-            passing_conditions = int(raw_passing_conditions)
-        else:
-            passing_conditions = -1
+        raw_passing_conditions = self._opt_value(details, "合格条件")
+        passing_conditions = -1
+        if raw_passing_conditions is not None:
+            num_passing_conditions = re.sub(r"([0-9]+).*", r"\1", raw_passing_conditions)
+            if num_passing_conditions is not None and num_passing_conditions.isdigit():
+                passing_conditions = int(num_passing_conditions)
 
         return ManabaDrillDetails(
             course_id,
