@@ -21,6 +21,8 @@
 ## 要件
 
 - manaba (Tested with `manaba 2.97`)
+  - [Official documentation for student](https://doc.manaba.jp/doc/course2-manual/student2.97/ja/)
+  - [Official documentation for teacher](https://doc.manaba.jp/doc/course2-manual/teacher2.97/ja/)
 - Python 3.9+
 - [requirements.txt](requirements.txt): `requests`, `beautifulsoup4`
 
