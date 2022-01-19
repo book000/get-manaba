@@ -254,7 +254,7 @@ class Manaba:
         Returns:
             list[ManabaCourse]: 参加しているコース情報
         """
-        course_rows = my_courses.find_all("tr", {"class": "courselist-c"})
+        course_rows = my_courses.find_all("tr", class_=["courselist-c", "courselist-r"])
 
         courses = []
         for course_row in course_rows:
@@ -285,7 +285,7 @@ class Manaba:
         Returns:
             list[ManabaCourse]: 参加しているコース情報
         """
-        course_cards = my_courses.find_all("div", {"class": "courselistweekly-c"})
+        course_cards = my_courses.find_all("div", class_=["courselistweekly-c", "courselistweekly-r"])
 
         courses = []
         for course_card in course_cards:
