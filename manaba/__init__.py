@@ -156,6 +156,46 @@ class Manaba:
 
         return []
 
+    def get_courses_all(self) -> list[ManabaCourse]:
+        """
+        参加しているすべてのコース情報を取得する
+
+        Returns:
+            list[ManabaCourse]: 参加しているすべてのコース情報
+
+        Notes:
+            詳細情報は :func:`manaba.Manaba.get_course` で取得できます。
+        """
+        if not self.__logged_in:
+            raise ManabaNotLoggedIn()
+
+        self.__response = self.session.get(urljoin(self.__base_url, "/ct/home_course_all"))
+        if self.__response.status_code == 404 or self.__response.status_code == 403:
+            raise ManabaNotFound()
+        self.__response.raise_for_status()
+        soup = BeautifulSoup(self.__response.text, "html5lib")
+
+        if soup.find("ul", {"class": "infolist-tab"}) is None:
+            raise ManabaInternalError()
+
+        correct_list_format_href: str = soup \
+            .find("ul", {"class": "infolist-tab"}) \
+            .find("li", {"class": "current"}) \
+            .find("a") \
+            .get("href")
+        correct_list_format = parse_qs(urlparse(correct_list_format_href).query)["chglistformat"][0]
+
+        my_courses = soup.find("div", {"class": "mycourses-body"})
+
+        if correct_list_format == "thumbnail":
+            return self._get_courses_from_thumbnail(my_courses)
+        if correct_list_format == "list":
+            return self._get_courses_from_list(my_courses)
+        if correct_list_format == "timetable":
+            return self._get_courses_from_timetable(my_courses, soup.find("table", {"class": "courselist"}))
+
+        return []
+
     def _get_courses_from_thumbnail(self,
                                     my_courses: bs4.element.Tag) -> list[ManabaCourse]:
         """

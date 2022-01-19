@@ -41,6 +41,7 @@ class TestManaba(TestCase):
         self.assertTrue(self.manaba.login(username, password), "ログインに失敗しました")
 
         self.courses_count: dict[str, int] = {}
+        self.courses_all_count: dict[str, int] = {}
 
     def test_get_courses_from_thumbnail(self) -> None:
         # Change to thumbnail format
@@ -99,6 +100,64 @@ class TestManaba(TestCase):
                               "サムネイル({0})とタイムテーブル({1})の件数が異なります。".format(
                                   str(self.courses_count["thumbnail"]),
                                   str(self.courses_count["timetable"])))
+
+    def test_get_courses_all_from_thumbnail(self) -> None:
+        # Change to thumbnail format
+        response = self.manaba.session.get(self.base_url + "/ct/home_course_all?chglistformat=thumbnail")
+        response.raise_for_status()
+
+        courses = self.manaba.get_courses_all()
+        self.courses_count["thumbnail"] = len(courses)
+        self.assertGreater(len(courses), 0, "サムネイルコース一覧が取得できませんでした(0件)")
+
+        self.check_courses_all_count()
+
+    def test_get_courses_all_from_list(self) -> None:
+        # Change to list format
+        response = self.manaba.session.get(self.base_url + "/ct/home_course_all?chglistformat=list")
+        response.raise_for_status()
+
+        courses = self.manaba.get_courses_all()
+        self.courses_count["list"] = len(courses)
+        self.assertGreater(len(courses), 0, "リストコース一覧が取得できませんでした(0件)")
+
+        self.check_courses_all_count()
+
+    def test_get_courses_all_from_timetable(self) -> None:
+        # Change to timetable format
+        response = self.manaba.session.get(self.base_url + "/ct/home_course_all?chglistformat=timetable")
+        response.raise_for_status()
+
+        courses = self.manaba.get_courses_all()
+        self.courses_count["timetable"] = len(courses)
+        self.assertGreater(len(courses), 0, "タイムテーブルコース一覧が取得できませんでした(0件)")
+
+        self.check_courses_all_count()
+
+    def check_courses_all_count(self) -> None:
+        """
+        それぞれのコース数が同じかどうかを調べる
+        """
+        if "thumbnail" in self.courses_all_count and \
+                "list" in self.courses_all_count:
+            self.assertEquals(self.courses_all_count["thumbnail"], self.courses_all_count["list"],
+                              "サムネイル({0})とリスト({1})の件数が異なります。".format(
+                                  str(self.courses_all_count["thumbnail"]),
+                                  str(self.courses_all_count["list"])))
+
+        if "list" in self.courses_all_count and \
+                "timetable" in self.courses_all_count:
+            self.assertEquals(self.courses_all_count["list"], self.courses_all_count["timetable"],
+                              "リスト({0})とタイムテーブル({1})の件数が異なります。".format(
+                                  str(self.courses_all_count["list"]),
+                                  str(self.courses_all_count["timetable"])))
+
+        if "thumbnail" in self.courses_all_count and \
+                "timetable" in self.courses_all_count:
+            self.assertEquals(self.courses_all_count["thumbnail"], self.courses_all_count["timetable"],
+                              "サムネイル({0})とタイムテーブル({1})の件数が異なります。".format(
+                                  str(self.courses_all_count["thumbnail"]),
+                                  str(self.courses_all_count["timetable"])))
 
     def test_get_course(self) -> None:
         if "test_get_course" not in self.tests:
