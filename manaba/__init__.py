@@ -1328,10 +1328,13 @@ class Manaba:
                 raise ManabaInternalError(
                     "get_task_status return None (" + statuses[0].strip() + ")")
 
-            your_status = get_your_status(statuses[2].strip())
-            if your_status is None:
-                raise ManabaInternalError(
-                    "your_status return None (" + statuses[2].strip() + ")")
+            if "合格済み" in statuses[3].strip():
+                your_status = ManabaTaskYourStatusFlag.PASSED
+            else:
+                your_status = get_your_status(statuses[2].strip())
+                if your_status is None:
+                    raise ManabaInternalError(
+                        "your_status return None (" + statuses[2].strip() + ")")
 
             return ManabaTaskStatus(task_status, your_status)
 
