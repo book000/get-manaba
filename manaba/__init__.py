@@ -109,7 +109,10 @@ class Manaba:
         self.__response.raise_for_status()
         soup = BeautifulSoup(self.__response.text, "html5lib")
 
-        title = soup.find("a", {"id": "coursename"}).text
+        if soup.find("a", {"id": "coursename"}).has_attr("title"):
+            title = soup.find("a", {"id": "coursename"}).get("title")
+        else:
+            title = soup.find("a", {"id": "coursename"}).text
         teacher = soup.find("span", {"class": "courseteacher"}).text
         lecture_at = soup.find("span", {"class": "coursedata-info"}).find("span").text
         year = int(soup.find("span", {"class": "coursedata-info"}).text.replace(lecture_at, ""))
