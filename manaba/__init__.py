@@ -1317,8 +1317,11 @@ class Manaba:
                 if your_status is None:
                     your_status = get_your_status(statuses[2].strip())
                     if your_status is None:
-                        raise ManabaInternalError(
-                            "your_status return None (" + statuses[1].strip() + " | " + statuses[2].strip() + ")")
+                        if task_status == ManabaTaskStatusFlag.CLOSED:
+                            your_status = ManabaTaskYourStatusFlag.UNPASSED
+                        else:
+                            raise ManabaInternalError(
+                                "your_status return None (" + statuses[1].strip() + " | " + statuses[2].strip() + ")")
 
             return ManabaTaskStatus(task_status, your_status)
 
