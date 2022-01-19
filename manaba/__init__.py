@@ -1336,6 +1336,10 @@ class Manaba:
                 your_status = ManabaTaskYourStatusFlag.UNSUBMITTED
             elif "回提出済み" in statuses[1]:  # ドリル対策。未合格で締め切られている場合「n回提出済み」になる？
                 your_status = ManabaTaskYourStatusFlag.UNPASSED
+            elif "受験回数" in statuses[1]:  # ドリル対策。未合格で締め切られている場合「受験回数: n」になる
+                your_status = ManabaTaskYourStatusFlag.UNPASSED
+            elif "個別指導／相互閲覧画面へ" in statuses[1] and task_status == ManabaTaskStatusFlag.CLOSED:  # タスククローズ + 未提出？
+                your_status = ManabaTaskYourStatusFlag.UNSUBMITTED
             else:
                 your_status = get_your_status(statuses[1].strip())
                 if your_status is None:
