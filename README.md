@@ -8,6 +8,7 @@ Library for get various information about [manaba](https://manaba.jp).
 
 - This library is mainly designed to operate the service in the developer's university. Please note that it may not work well for other universities.
 - The university to which the developer of this library belongs will no longer be using manaba since 2022. As a result, support for this library will be discontinued and it will be archived as of April 2022.
+- I am planning to develop a library of ["UNIVERSAL PASSPORT" by Japan System Techniques Co](https://www.jast-gakuen.com/products/unipa/): [book000/get-unipa](https://github.com/book000/get-unipa)
 
 ## Warning / Disclaimer
 
@@ -20,9 +21,9 @@ Library for get various information about [manaba](https://manaba.jp).
 
 ## Requirements
 
-- manaba (Tested with `manaba 2.97`)
-  - [Official documentation for student](https://doc.manaba.jp/doc/course2-manual/student2.97/en/)
-  - [Official documentation for teacher](https://doc.manaba.jp/doc/course2-manual/teacher2.97/en/)
+- manaba (Tested with `manaba 2.971`)
+  - [Official documentation for student](https://doc.manaba.jp/doc/course2-manual/student2.971/en/)
+  - [Official documentation for teacher](https://doc.manaba.jp/doc/course2-manual/teacher2.971/en/)
 - Python 3.9+
 - [requirements.txt](requirements.txt): `requests`, `beautifulsoup4`, `html5lib`
 
